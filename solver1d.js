@@ -134,8 +134,8 @@ const i18n = {
     w3dSub: "คลิกซ้ายค้างเพื่อจับหมุนโครงสร้าง 360° • คลิกขวาเพื่อเลื่อน • หมุนลูกกลิ้งเมาส์เพื่อซูม • แสดงค่าแรงแบบเรียลไทม์",
     repHeaderTitle: "รายงานรายการคำนวณโครงสร้าง",
     repBtn1D: "รายงานคำนวณคาน 1D (แผ่นที่ 1–3)",
-    repBtn2D: "รายงานวิเคราะห์โครงสร้าง 2D",
-    repBtnTruss: "รายงานโครงหลังคาเหล็ก 2D & 3D (แผ่นที่ 1–2)",
+    repBtn2D: "รายงานวิเคราะห์โครงสร้าง 2D (แผ่นที่ 1–2)",
+    repBtnTruss: "รายงานโครงหลังคาเหล็ก 2D & 3D (แผ่นที่ 1–3)",
     repLblModelName: "ชื่อโมเดล:",
     repLblDesigner: "ผู้พัฒนา / ผู้ออกแบบ:",
     repLblDate: "วันที่:",
@@ -298,8 +298,8 @@ const i18n = {
     w3dSub: "Left-click drag to orbit 360° • Right-click drag to pan • Scroll to zoom • Real-time force vectors",
     repHeaderTitle: "CALCULATION REPORT",
     repBtn1D: "1D Beam Report (Sheets 1–3)",
-    repBtn2D: "2D Structural Analysis Report",
-    repBtnTruss: "Roof Truss 2D & 3D Report (Sheets 1–2)",
+    repBtn2D: "2D Structural Analysis Report (Sheets 1–2)",
+    repBtnTruss: "Roof Truss 2D & 3D Report (Sheets 1–3)",
     repLblModelName: "Model Name:",
     repLblDesigner: "Designer:",
     repLblDate: "Date:",
@@ -798,8 +798,68 @@ function setIgnoreSectionMode(ignore, silent = false) {
   }
 }
 
+function updateSectionPresetDropdown(selectedId) {
+  const select = document.getElementById('sectionPreset');
+  if (!select) return;
+
+  const isTH = (typeof currentLang === 'undefined' || currentLang === 'th');
+  const libSections = (typeof savedCloudSections !== 'undefined' && Array.isArray(savedCloudSections)) ? savedCloudSections : [];
+
+  let html = `<option value="none">${isTH ? '★ ไม่คิดหน้าตัด — โหมดโจทย์การบ้านทั่วไป (EI คงที่ / ไม่ระบุหน้าตัด)' : '★ No Cross-Section — Textbook Mode (Constant EI)'}</option>`;
+
+  // 1. Saved Cloud & Custom Library Sections
+  if (libSections.length > 0) {
+    html += `<optgroup label="${isTH ? 'คลังหน้าตัดที่สร้างไว้ / บันทึกในระบบ (Saved Library Sections)' : 'Saved Library Sections'}">`;
+    libSections.forEach(s => {
+      const uE = typeof Units !== 'undefined' ? Units.uE() : 'GPa';
+      const uI = typeof Units !== 'undefined' ? Units.uI() : 'cm⁴';
+      const uA = typeof Units !== 'undefined' ? Units.uA() : 'cm²';
+      const dispE = typeof Units !== 'undefined' ? +Units.E(s.E).toFixed(1) : s.E;
+      const dispI = typeof Units !== 'undefined' ? +Units.I(s.I_cm4).toFixed(1) : s.I_cm4;
+      const dispA = typeof Units !== 'undefined' ? +Units.A(s.A_cm2).toFixed(1) : s.A_cm2;
+      html += `<option value="${s.id}">${s.name} (E=${dispE}${uE}, I=${dispI}${uI}, A=${dispA}${uA})</option>`;
+    });
+    html += `</optgroup>`;
+  }
+
+  // 2. Standard Built-in Presets
+  html += `<optgroup label="${isTH ? 'หน้าตัดมาตรฐานของระบบ (Standard Presets)' : 'Standard Presets'}">`;
+  html += `<option value="mk2_soldier">MK2 SOLDIER (E=200GPa, I=534.6cm⁴, A=22.52cm²)</option>`;
+  html += `<option value="steel_w">${isTH ? 'เหล็กรูปพรรณ W-Beam W310x38.7 (W12x26)' : 'Steel W-Beam W310x38.7 (W12x26)'}</option>`;
+  html += `<option value="rc_rect">${isTH ? 'คอนกรีตเสริมเหล็ก RC (300 × 500 มม.)' : 'Reinforced Concrete RC (300 × 500 mm)'}</option>`;
+  html += `<option value="timber">${isTH ? 'ไม้โครงสร้าง Glulam (150 × 300 มม.)' : 'Structural Timber Glulam (150 × 300 mm)'}</option>`;
+  html += `<option value="steel_tube">${isTH ? 'เหล็กกล่องกลวง HSS (200 × 100 × 8 มม.)' : 'Hollow Structural Section HSS (200 × 100 × 8 mm)'}</option>`;
+  html += `</optgroup>`;
+
+  html += `<option value="custom">${isTH ? 'กำหนดเอง (Custom Section...)' : 'Custom Section...'}</option>`;
+
+  select.innerHTML = html;
+
+  if (selectedId) {
+    select.value = selectedId;
+  } else if (model.ignoreSection) {
+    select.value = 'none';
+  } else {
+    const matched = libSections.find(x => x.name === model.sectionName);
+    if (matched) {
+      select.value = matched.id;
+    } else {
+      let matchedDbKey = 'custom';
+      for (const [k, v] of Object.entries(sectionDatabase)) {
+        if (v.name === model.sectionName) {
+          matchedDbKey = k;
+          break;
+        }
+      }
+      select.value = matchedDbKey;
+    }
+  }
+}
+
 function applySectionPreset() {
-  const key = document.getElementById('sectionPreset').value;
+  const select = document.getElementById('sectionPreset');
+  if (!select) return;
+  const key = select.value;
   if (key === 'none') {
     setIgnoreSectionMode(true);
     return;
@@ -810,6 +870,34 @@ function applySectionPreset() {
     solveAndRender();
     return;
   }
+
+  // Check saved cloud library sections first
+  const libSections = (typeof savedCloudSections !== 'undefined' && Array.isArray(savedCloudSections)) ? savedCloudSections : [];
+  const cloudSec = libSections.find(x => x.id === key);
+  if (cloudSec) {
+    model.sectionName = cloudSec.name;
+    model.shape = cloudSec.shape;
+    model.E = cloudSec.E;
+    model.I = cloudSec.I_cm4;
+    model.A = cloudSec.A_cm2;
+    model.depth = cloudSec.d;
+    model.y = cloudSec.y_mm;
+
+    if (typeof frame2D !== 'undefined') {
+      frame2D.E = cloudSec.E * 1e6;
+      frame2D.A_frame = cloudSec.A_cm2 * 1e-4;
+      frame2D.I_frame = cloudSec.I_cm4 * 1e-8;
+    }
+
+    const lblActive = document.getElementById('lblActiveSectionName');
+    if (lblActive) lblActive.innerText = cloudSec.name;
+    syncInputFields();
+    solveAndRender();
+    if (typeof solve2DFrame === 'function') solve2DFrame();
+    return;
+  }
+
+  // Check standard static database
   const p = sectionDatabase[key];
   if (!p) return;
   model.sectionName = p.name;
@@ -819,7 +907,8 @@ function applySectionPreset() {
   model.A = p.A_si;
   model.depth = p.d_si;
   model.y = p.y_si;
-  document.getElementById('lblActiveSectionName').innerText = p.name;
+  const lblActive = document.getElementById('lblActiveSectionName');
+  if (lblActive) lblActive.innerText = p.name;
   syncInputFields();
   solveAndRender();
 }
@@ -1727,7 +1816,7 @@ function solveBeamFEA() {
       x: item.support.x,
       type: item.support.type,
       Ry: Ry, // Upward reaction in kN
-      ReportRy: -Ry, // OptimalBeam report sign convention (7.7978, -36.3813, -35.3165)
+      ReportRy: -Ry, // Standard textbook report sign convention (7.7978, -36.3813, -35.3165)
       Mz: item.support.type === 'fixed' ? Mz : 0
     };
   });
@@ -1743,10 +1832,10 @@ function solveBeamFEA() {
 
     let deflVal, slopeVal;
     if (model.ignoreSection) {
-      // No Cross-Section / Homework Constant-EI Mode:
+      // No Cross-Section / Constant-EI Mode:
       // Relative deflection EIδ in kN·m³ (upward +, downward -)
       deflVal = ei_v;
-      // Relative slope EIθ in kN·m² (-EI * dv/dx matching OptimalBeam/textbook sign convention)
+      // Relative slope EIθ in kN·m² (-EI * dv/dx matching textbook sign convention)
       slopeVal = -ei_theta;
     } else {
       // Standard Cross-Section Mode:
@@ -1942,7 +2031,7 @@ function renderCrossSectionVisualizer() {
   ctx.fillStyle = 'rgba(56, 189, 248, 0.25)';
   ctx.lineWidth = 2;
 
-  if (model.shape === 'steel_w') {
+  if (model.shape === 'steel_w' || model.shape === 'ibeam') {
     // Draw I-Section
     ctx.beginPath();
     ctx.rect(24, 16, 52, 10);
@@ -1950,10 +2039,45 @@ function renderCrossSectionVisualizer() {
     ctx.rect(24, 74, 52, 10);
     ctx.fill();
     ctx.stroke();
-  } else if (model.shape === 'steel_tube') {
+  } else if (model.shape === 'steel_tube' || model.shape === 'box') {
+    // Draw Box / HSS Section
+    ctx.beginPath();
+    ctx.rect(26, 18, 48, 64);
+    ctx.rect(34, 26, 32, 48);
+    ctx.fill('evenodd');
     ctx.strokeRect(26, 18, 48, 64);
-    ctx.strokeRect(33, 25, 34, 50);
+    ctx.strokeRect(34, 26, 32, 48);
+  } else if (model.shape === 'channel') {
+    // Draw C-Channel
+    ctx.beginPath();
+    ctx.moveTo(70, 18);
+    ctx.lineTo(30, 18);
+    ctx.lineTo(30, 82);
+    ctx.lineTo(70, 82);
+    ctx.lineTo(70, 72);
+    ctx.lineTo(40, 72);
+    ctx.lineTo(40, 28);
+    ctx.lineTo(70, 28);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  } else if (model.shape === 'pipe') {
+    // Draw Circular Pipe
+    ctx.beginPath();
+    ctx.arc(50, 50, 32, 0, Math.PI * 2);
+    ctx.arc(50, 50, 22, 0, Math.PI * 2, true);
+    ctx.fill('evenodd');
+    ctx.beginPath(); ctx.arc(50, 50, 32, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(50, 50, 22, 0, Math.PI * 2); ctx.stroke();
+  } else if (model.shape === 'tbeam') {
+    // Draw T-Beam
+    ctx.beginPath();
+    ctx.rect(22, 18, 56, 12);
+    ctx.rect(44, 30, 12, 52);
+    ctx.fill();
+    ctx.stroke();
   } else {
+    // Solid Rectangle (RC / Timber)
     ctx.fillRect(28, 16, 44, 68);
     ctx.strokeRect(28, 16, 44, 68);
   }
@@ -2651,6 +2775,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Initial solve on startup
   loadPreset('report_example_4718');
+  if (typeof updateSectionPresetDropdown === 'function') updateSectionPresetDropdown();
 });
 
 /*************************************************************************

@@ -397,6 +397,7 @@ function deleteSavedCloudSection(id) {
 
   savedCloudSections = savedCloudSections.filter(x => x.id !== id);
   renderSavedSectionsLibrary();
+  if (typeof updateSectionPresetDropdown === 'function') updateSectionPresetDropdown();
   showNotification(
     isTH ? 'ลบหน้าตัดเรียบร้อย' : 'Section Deleted',
     isTH ? `ลบ "${name}" ออกจากคลังแล้ว` : `Removed "${name}" from library`
@@ -605,28 +606,51 @@ function applySavedCloudSection(id) {
   model.A = s.A_cm2;
   model.depth = s.d;
   model.y = s.y_mm;
-  model.shape = s.shape === 'ibeam' ? 'steel_w' : s.shape === 'box' ? 'steel_tube' : s.shape === 'pipe' ? 'steel_tube' : 'rc_rect';
+  model.shape = s.shape;
 
   // Also update 2D frame section stiffness
-  frame2D.E = s.E * 1e6;
-  frame2D.A_frame = s.A_cm2 * 1e-4;
-  frame2D.I_frame = s.I_cm4 * 1e-8;
+  if (typeof frame2D !== 'undefined') {
+    frame2D.E = s.E * 1e6;
+    frame2D.A_frame = s.A_cm2 * 1e-4;
+    frame2D.I_frame = s.I_cm4 * 1e-8;
+  }
 
   const lblSec = document.getElementById('lblActiveSectionName');
   if (lblSec) lblSec.innerText = s.name;
+
+  if (typeof updateSectionPresetDropdown === 'function') {
+    updateSectionPresetDropdown(s.id);
+  }
+
   if (typeof syncSectionModeUI === 'function') syncSectionModeUI();
   syncInputFields();
   solveAndRender();
-  solve2DFrame();
+  if (typeof solve2DFrame === 'function') solve2DFrame();
   showNotification(
-    currentLang === 'th' ? 'อัปเดตหน้าตัดสำเร็จ' : 'Section Applied',
-    currentLang === 'th' ? `นำหน้าตัด "${s.name}" ไปใช้ในคาน 1D และโครงข้อแข็ง 2D แล้ว` : `Section "${s.name}" active in 1D & 2D solvers`
+    currentLang === 'th' ? 'เพิ่มหน้าตัดเข้า 1D & 2D แล้ว' : 'Section Applied',
+    currentLang === 'th' ? `หน้าตัด "${s.name}" ถูกนำไปใช้ในคาน 1D และโครงสร้าง 2D เรียบร้อย` : `Section "${s.name}" active in 1D & 2D solvers`
+  );
+}
+
+function openSectionBuilderFor1D() {
+  if (typeof switchWorkspace === 'function') switchWorkspace('sections');
+  if (typeof createNewSection === 'function') createNewSection();
+  const nameInput = document.getElementById('sbName');
+  if (nameInput) {
+    nameInput.focus();
+    nameInput.select();
+  }
+  showNotification(
+    currentLang === 'th' ? 'สร้างหน้าตัดใหม่สำหรับ 1D' : 'Create Section for 1D',
+    currentLang === 'th'
+      ? 'ระบุชื่อและขนาดหน้าตัดที่ต้องการ แล้วกด "บันทึกเข้าคลัง & นำไปใช้กับ 1D/2D" เพื่อส่งเข้า 1D ทันที'
+      : 'Enter dimensions and click "Save & Apply" to import directly into 1D Beam'
   );
 }
 
 /*************************************************************************
  * PART 5: CALCULATION REPORT & CLEAN PDF EXPORT ENGINE
- * Exact 1:1 Replica of OptimalBeam PDF Sheet 1, Sheet 2, Sheet 3 + 2D
+ * CivilMech Studio Engineering Calculation Report Sheets (1D, 2D & Roof Truss)
  *************************************************************************/
 function setReportSource(src) {
   if (!['1d', '2d', 'truss'].includes(src)) src = '1d';
@@ -681,13 +705,13 @@ function setReportSource(src) {
 
   const labelMap = {
     '1d': isTH ? 'พิมพ์เฉพาะ: รายงานคำนวณคาน 1D (แผ่นที่ 1–3)' : 'Print Only: 1D Beam Report (Sheets 1–3)',
-    '2d': isTH ? 'พิมพ์เฉพาะ: รายงานวิเคราะห์โครงสร้าง 2D' : 'Print Only: 2D Structural Report',
-    'truss': isTH ? 'พิมพ์เฉพาะ: รายงานโครงหลังคาเหล็ก 2D & 3D (แผ่นที่ 1–2)' : 'Print Only: 2D & 3D Roof Truss Report (Sheets 1–2)'
+    '2d': isTH ? 'พิมพ์เฉพาะ: รายงานวิเคราะห์โครงสร้าง 2D (แผ่นที่ 1–2)' : 'Print Only: 2D Structural Report (Sheets 1–2)',
+    'truss': isTH ? 'พิมพ์เฉพาะ: รายงานโครงหลังคาเหล็ก 2D & 3D (แผ่นที่ 1–3)' : 'Print Only: 2D & 3D Roof Truss Report (Sheets 1–3)'
   };
   const badgeMap = {
     '1d': isTH ? 'กำลังแสดงและเตรียมพิมพ์เฉพาะ: รายงานคำนวณคาน 1D (แผ่นที่ 1–3)' : 'Active & Ready to Print Only: 1D Beam Report (Sheets 1–3)',
-    '2d': isTH ? 'กำลังแสดงและเตรียมพิมพ์เฉพาะ: รายงานวิเคราะห์โครงสร้าง 2D' : 'Active & Ready to Print Only: 2D Structural Analysis Report',
-    'truss': isTH ? 'กำลังแสดงและเตรียมพิมพ์เฉพาะ: รายงานโครงหลังคาเหล็ก 2D & 3D (แผ่นที่ 1–2)' : 'Active & Ready to Print Only: 2D & 3D Roof Truss Report (Sheets 1–2)'
+    '2d': isTH ? 'กำลังแสดงและเตรียมพิมพ์เฉพาะ: รายงานวิเคราะห์โครงสร้าง 2D (แผ่นที่ 1–2)' : 'Active & Ready to Print Only: 2D Structural Analysis Report (Sheets 1–2)',
+    'truss': isTH ? 'กำลังแสดงและเตรียมพิมพ์เฉพาะ: รายงานโครงหลังคาเหล็ก 2D & 3D (แผ่นที่ 1–3)' : 'Active & Ready to Print Only: 2D & 3D Roof Truss Report (Sheets 1–3)'
   };
 
   if (lblPrint) lblPrint.innerText = labelMap[src] || labelMap['1d'];
@@ -726,75 +750,189 @@ function drawReportBeamSchematic(canvasId) {
   const W = c.width, H = c.height;
   ctx.clearRect(0, 0, W, H);
 
+  // Clean White Canvas Background
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, W, H);
 
-  const padL = 85, padR = 85;
+  const padL = 75, padR = 75;
   const plotW = W - padL - padR;
-  const beamY = Math.round(H * 0.64);
-  const L = model.length;
+  const beamY = Math.round(H * 0.58);
+  const L = model.length || 1;
   const xToPx = x => padL + (x / L) * plotW;
 
-  // Grey Horizontal Beam Bar (Exact style of OptimalBeam PDF)
-  ctx.fillStyle = '#7b7b7b';
-  ctx.fillRect(padL, beamY - 6, plotW, 12);
+  // 1. Draw Architectural Dimension Line below the beam
+  const dimY = beamY + 36;
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padL, dimY);
+  ctx.lineTo(padL + plotW, dimY);
+  ctx.stroke();
 
-  // Red Triangular Supports
+  // Collect key stations for dimension ticks
+  const stations = [0, L];
+  model.supports.forEach(s => stations.push(+s.x));
+  model.loads.forEach(l => {
+    if (l.type === 'point' || l.type === 'moment') stations.push(+l.x);
+    else if (l.type === 'udl') { stations.push(+l.x1); stations.push(+l.x2); }
+  });
+  const uniqueStations = [...new Set(stations.map(x => +x.toFixed(3)))].sort((a, b) => a - b);
+
+  ctx.fillStyle = '#64748b';
+  ctx.font = '9px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  uniqueStations.forEach(x => {
+    const px = xToPx(x);
+    ctx.beginPath();
+    ctx.moveTo(px, dimY - 4);
+    ctx.lineTo(px, dimY + 4);
+    ctx.stroke();
+    ctx.fillText(`${+Units.len(x).toFixed(2)}${Units.uLen()}`, px, dimY + 14);
+  });
+
+  // 2. Draw Main Structural Beam Bar (Deep Steel Blue #1e293b with subtle rounded corners)
+  ctx.fillStyle = '#1e293b';
+  ctx.beginPath();
+  if (typeof ctx.roundRect === 'function') {
+    ctx.roundRect(padL, beamY - 7, plotW, 14, 3);
+  } else {
+    ctx.rect(padL, beamY - 7, plotW, 14);
+  }
+  ctx.fill();
+
+  // Beam Centerline (Fine White dashed line)
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 3]);
+  ctx.beginPath();
+  ctx.moveTo(padL, beamY);
+  ctx.lineTo(padL + plotW, beamY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // 3. Draw Supports (Professional ISO Structural Symbols)
   model.supports.forEach(s => {
     const px = xToPx(s.x);
-    ctx.fillStyle = '#ff0000';
     if (s.type === 'fixed') {
-      ctx.fillRect(px - 4, beamY - 22, 8, 44);
-    } else {
+      const isLeft = s.x <= 0.01;
+      const wallX = isLeft ? px - 12 : px;
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(wallX, beamY - 22, 12, 44);
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 1;
+      for (let y = beamY - 20; y <= beamY + 20; y += 6) {
+        ctx.beginPath();
+        ctx.moveTo(wallX, y);
+        ctx.lineTo(wallX + 12, y - 6);
+        ctx.stroke();
+      }
+    } else if (s.type === 'pinned') {
+      // Modern Pinned Hinge Support (Royal Blue #2563eb)
+      ctx.fillStyle = '#2563eb';
+      ctx.strokeStyle = '#1d4ed8';
+      ctx.lineWidth = 1.8;
       ctx.beginPath();
-      ctx.moveTo(px, beamY + 6);
-      ctx.lineTo(px - 10, beamY + 25);
-      ctx.lineTo(px + 10, beamY + 25);
+      ctx.moveTo(px, beamY + 7);
+      ctx.lineTo(px - 10, beamY + 24);
+      ctx.lineTo(px + 10, beamY + 24);
       ctx.closePath();
       ctx.fill();
+      ctx.stroke();
+
+      // Pin Hinge Circle
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(px, beamY + 9, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Base plate
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(px - 14, beamY + 25);
+      ctx.lineTo(px + 14, beamY + 25);
+      ctx.stroke();
+    } else if (s.type === 'roller') {
+      // Modern Roller Support (Emerald Green #059669)
+      ctx.fillStyle = '#059669';
+      ctx.strokeStyle = '#047857';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(px, beamY + 7);
+      ctx.lineTo(px - 9, beamY + 20);
+      ctx.lineTo(px + 9, beamY + 20);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Roller Wheels
+      ctx.fillStyle = '#ffffff';
+      [-5, 5].forEach(ox => {
+        ctx.beginPath();
+        ctx.arc(px + ox, beamY + 24, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      });
+
+      // Ground line
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(px - 14, beamY + 28);
+      ctx.lineTo(px + 14, beamY + 28);
+      ctx.stroke();
     }
   });
 
-  // Black Vertical Point Load Arrows & UDL
+  // 4. Draw Applied Loads (Crimson #e11d48 for Points, Amber-Rose for UDL)
   const maxP = Math.max(10, ...model.loads.filter(l => l.type === 'point').map(l => Math.abs(l.P)));
   model.loads.forEach(l => {
     if (l.type === 'point') {
       const px = xToPx(l.x);
       const isUp = l.P < 0;
       const mag = Math.abs(l.P);
-      const arrowH = 24 + (mag / maxP) * 38;
-      ctx.strokeStyle = '#000000';
-      ctx.fillStyle = '#000000';
+      const arrowH = 26 + (mag / maxP) * 36;
+      ctx.strokeStyle = '#e11d48';
+      ctx.fillStyle = '#e11d48';
       ctx.lineWidth = 2.4;
 
       if (isUp) {
-        const yBot = beamY + 8 + arrowH;
-        const yTop = beamY + 8;
+        const yBot = beamY + 9 + arrowH;
+        const yTop = beamY + 9;
         ctx.beginPath();
         ctx.moveTo(px, yBot);
         ctx.lineTo(px, yTop);
         ctx.stroke();
 
         ctx.beginPath();
-        ctx.moveTo(px, yTop - 1);
-        ctx.lineTo(px - 5.5, yTop + 6);
-        ctx.lineTo(px + 5.5, yTop + 6);
+        ctx.moveTo(px, yTop);
+        ctx.lineTo(px - 5, yTop + 8);
+        ctx.lineTo(px + 5, yTop + 8);
         ctx.closePath();
         ctx.fill();
+
+        ctx.font = 'bold 9.5px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${+Units.force(mag).toFixed(1)} ${Units.uForce()}`, px, yBot + 12);
       } else {
-        const yTop = beamY - 8 - arrowH;
-        const yBot = beamY - 8;
+        const yTop = beamY - 9 - arrowH;
+        const yBot = beamY - 9;
         ctx.beginPath();
         ctx.moveTo(px, yTop);
         ctx.lineTo(px, yBot);
         ctx.stroke();
 
         ctx.beginPath();
-        ctx.moveTo(px, yBot + 1);
-        ctx.lineTo(px - 5.5, yBot - 6);
-        ctx.lineTo(px + 5.5, yBot - 6);
+        ctx.moveTo(px, yBot);
+        ctx.lineTo(px - 5, yBot - 8);
+        ctx.lineTo(px + 5, yBot - 8);
         ctx.closePath();
         ctx.fill();
+
+        ctx.font = 'bold 9.5px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${+Units.force(mag).toFixed(1)} ${Units.uForce()}`, px, yTop - 5);
       }
     } else if (l.type === 'udl') {
       const px1 = xToPx(l.x1), px2 = xToPx(l.x2);
@@ -805,39 +943,62 @@ function drawReportBeamSchematic(canvasId) {
       const h1 = (mag1 / maxW) * maxH;
       const h2 = (mag2 / maxW) * maxH;
 
-      ctx.fillStyle = 'rgba(0,0,0,0.12)';
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 1.5;
+      const grad = ctx.createLinearGradient(0, beamY - 9 - maxH, 0, beamY - 9);
+      grad.addColorStop(0, 'rgba(225, 29, 72, 0.22)');
+      grad.addColorStop(1, 'rgba(225, 29, 72, 0.05)');
+      ctx.fillStyle = grad;
+      ctx.strokeStyle = '#e11d48';
+      ctx.lineWidth = 1.6;
 
       ctx.beginPath();
-      ctx.moveTo(px1, beamY - 8);
-      ctx.lineTo(px1, beamY - 8 - h1);
-      ctx.lineTo(px2, beamY - 8 - h2);
-      ctx.lineTo(px2, beamY - 8);
+      ctx.moveTo(px1, beamY - 9);
+      ctx.lineTo(px1, beamY - 9 - h1);
+      ctx.lineTo(px2, beamY - 9 - h2);
+      ctx.lineTo(px2, beamY - 9);
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
 
-      // Subtle arrows
-      const numArrows = Math.max(2, Math.min(8, Math.round((px2 - px1) / 32)));
+      const numArrows = Math.max(3, Math.min(8, Math.round((px2 - px1) / 28)));
       for (let k = 0; k <= numArrows; k++) {
         const t = k / numArrows;
         const ax = px1 + t * (px2 - px1);
         const ah = h1 + t * (h2 - h1);
-        if (ah > 5) {
+        if (ah > 4) {
           ctx.beginPath();
-          ctx.moveTo(ax, beamY - 8 - ah);
-          ctx.lineTo(ax, beamY - 8);
+          ctx.moveTo(ax, beamY - 9 - ah);
+          ctx.lineTo(ax, beamY - 9);
           ctx.stroke();
 
           ctx.beginPath();
-          ctx.moveTo(ax, beamY - 8);
+          ctx.moveTo(ax, beamY - 9);
           ctx.lineTo(ax - 3, beamY - 14);
           ctx.lineTo(ax + 3, beamY - 14);
           ctx.closePath();
           ctx.fill();
         }
       }
+
+      const magStr = (Math.abs(l.w2 - l.w1) > 1e-4)
+        ? `${+Units.dist(l.w1).toFixed(1)}→${+Units.dist(l.w2).toFixed(1)} ${Units.uDist()}`
+        : `${+Units.dist(l.w1).toFixed(1)} ${Units.uDist()}`;
+      ctx.font = 'bold 9.5px Inter, sans-serif';
+      ctx.fillStyle = '#b91c1c';
+      ctx.textAlign = 'center';
+      ctx.fillText(magStr, (px1 + px2) / 2, beamY - 9 - Math.max(h1, h2) - 5);
+    } else if (l.type === 'moment') {
+      const px = xToPx(l.x);
+      const isCCW = l.M > 0;
+      ctx.strokeStyle = '#d97706';
+      ctx.fillStyle = '#d97706';
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.arc(px, beamY - 18, 14, Math.PI * 0.2, Math.PI * 1.8, !isCCW);
+      ctx.stroke();
+
+      ctx.font = 'bold 9.5px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${+Units.mom(Math.abs(l.M)).toFixed(1)} ${Units.uMom()}`, px, beamY - 36);
     }
   });
 }
@@ -849,26 +1010,26 @@ function drawReportDiagram(canvasId, key, yAxisLabel, extPos, extNeg, sciFormat 
   const W = c.width, H = c.height;
   ctx.clearRect(0, 0, W, H);
 
+  // Clean White Background
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, W, H);
 
-  const padL = 85, padR = 55, padT = 10, padB = 22;
+  const padL = 80, padR = 45, padT = 12, padB = 24;
   const plotW = W - padL - padR;
   const plotH = H - padT - padB;
-  const L = model.length;
+  const L = model.length || 1;
 
   const vals = solution.samples.map(s => s[key]);
   const maxVal = Math.max(0, ...vals);
   const minVal = Math.min(0, ...vals);
   const spanV = Math.max(1e-6, maxVal - minVal);
 
-  // Proportional top/bottom scaling matching Sheet 2 of 3
   const xToPx = x => padL + (x / L) * plotW;
   const yToPx = v => padT + ((maxVal - v) / spanV) * plotH;
   const zeroY = yToPx(0);
 
-  // Vertical & Horizontal faint grid lines
-  ctx.strokeStyle = '#efefef';
+  // Modern Blueprint Grid Lines (subtle slate-100)
+  ctx.strokeStyle = '#f1f5f9';
   ctx.lineWidth = 1;
   for (let x = 0; x <= L + 0.001; x += 0.5) {
     const px = xToPx(x);
@@ -877,35 +1038,63 @@ function drawReportDiagram(canvasId, key, yAxisLabel, extPos, extNeg, sciFormat 
   ctx.beginPath(); ctx.moveTo(padL, padT); ctx.lineTo(padL + plotW, padT); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(padL, padT + plotH); ctx.lineTo(padL + plotW, padT + plotH); ctx.stroke();
 
-  // Lavender Shaded Area under curve (#e1e5fa)
+  // Distinct Color Palette based on diagram type (Original CivilMech Studio Design)
+  let strokeCol = '#0284c7';
+  let fillGrad = ctx.createLinearGradient(0, padT, 0, padT + plotH);
+
+  if (key === 'V') {
+    strokeCol = '#0284c7';
+    fillGrad.addColorStop(0, 'rgba(14, 165, 233, 0.25)');
+    fillGrad.addColorStop(0.5, 'rgba(14, 165, 233, 0.08)');
+    fillGrad.addColorStop(1, 'rgba(225, 29, 72, 0.22)');
+  } else if (key === 'M') {
+    strokeCol = '#2563eb';
+    fillGrad.addColorStop(0, 'rgba(37, 99, 235, 0.28)');
+    fillGrad.addColorStop(0.5, 'rgba(37, 99, 235, 0.08)');
+    fillGrad.addColorStop(1, 'rgba(217, 119, 6, 0.22)');
+  } else if (key === 'defl') {
+    strokeCol = '#0d9488';
+    fillGrad.addColorStop(0, 'rgba(13, 148, 136, 0.25)');
+    fillGrad.addColorStop(1, 'rgba(13, 148, 136, 0.04)');
+  } else if (key === 'slope') {
+    strokeCol = '#7c3aed';
+    fillGrad.addColorStop(0, 'rgba(124, 58, 237, 0.22)');
+    fillGrad.addColorStop(1, 'rgba(124, 58, 237, 0.04)');
+  } else {
+    strokeCol = '#ea580c';
+    fillGrad.addColorStop(0, 'rgba(234, 88, 12, 0.25)');
+    fillGrad.addColorStop(1, 'rgba(234, 88, 12, 0.04)');
+  }
+
+  // Draw Shaded Area under curve
   ctx.beginPath();
   ctx.moveTo(xToPx(0), zeroY);
   solution.samples.forEach(s => ctx.lineTo(xToPx(s.x), yToPx(s[key])));
   ctx.lineTo(xToPx(L), zeroY);
   ctx.closePath();
-  ctx.fillStyle = 'rgba(218, 224, 252, 0.72)';
+  ctx.fillStyle = fillGrad;
   ctx.fill();
 
-  // Red Zero Baseline
-  ctx.strokeStyle = '#f06277';
-  ctx.lineWidth = 1;
+  // Crisp Zero Datum Baseline (Dark Slate #334155 with '0' marker)
+  ctx.strokeStyle = '#334155';
+  ctx.lineWidth = 1.2;
   ctx.beginPath();
   ctx.moveTo(padL, zeroY);
   ctx.lineTo(padL + plotW, zeroY);
   ctx.stroke();
 
-  // Blue Curve Outline (#7c98d6)
+  // Curve Outline
   ctx.beginPath();
   solution.samples.forEach((s, idx) => {
     if (idx === 0) ctx.moveTo(xToPx(s.x), yToPx(s[key]));
     else ctx.lineTo(xToPx(s.x), yToPx(s[key]));
   });
-  ctx.strokeStyle = '#7c98d6';
-  ctx.lineWidth = 1.2;
+  ctx.strokeStyle = strokeCol;
+  ctx.lineWidth = 2.0;
   ctx.stroke();
 
-  // Left & Bottom Black Axes
-  ctx.strokeStyle = '#555555';
+  // Plot Frame Borders (Left & Bottom)
+  ctx.strokeStyle = '#64748b';
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(padL, padT);
@@ -913,23 +1102,25 @@ function drawReportDiagram(canvasId, key, yAxisLabel, extPos, extNeg, sciFormat 
   ctx.lineTo(padL + plotW, padT + plotH);
   ctx.stroke();
 
-  // X-Axis Ticks
-  ctx.fillStyle = '#222222';
-  ctx.font = '9.5px serif';
+  // X-Axis Ticks & Modern Font
+  ctx.fillStyle = '#475569';
+  ctx.font = '9px Inter, sans-serif';
   ctx.textAlign = 'center';
   for (let x = 0; x <= L + 0.001; x += 0.5) {
     const px = xToPx(x);
     ctx.fillText(Units.len(x).toFixed(1), px, padT + plotH + 13);
   }
   ctx.textAlign = 'left';
-  ctx.fillText(`Location (${Units.uLen()})`, padL + 3, padT + plotH - 4);
+  ctx.fillStyle = '#64748b';
+  ctx.fillText(`x (${Units.uLen()})`, padL + plotW - 20, padT + plotH - 4);
 
-  // Y-Axis Rotated Label & Max/Min Numbers
+  // Y-Axis Rotated Label
   ctx.save();
-  ctx.translate(padL + 11, padT + plotH / 2);
+  ctx.translate(padL - 32, padT + plotH / 2);
   ctx.rotate(-Math.PI / 2);
   ctx.textAlign = 'center';
-  ctx.font = '9.5px serif';
+  ctx.fillStyle = '#334155';
+  ctx.font = 'bold 9px Inter, sans-serif';
   ctx.fillText(yAxisLabel, 0, 0);
   ctx.restore();
 
@@ -943,38 +1134,32 @@ function drawReportDiagram(canvasId, key, yAxisLabel, extPos, extNeg, sciFormat 
   };
 
   ctx.textAlign = 'right';
-  ctx.font = '9.5px serif';
-  ctx.fillText(fmtY(maxVal), padL - 5, padT + 8);
-  ctx.fillText(fmtY(minVal), padL - 5, padT + plotH);
+  ctx.font = 'bold 8.5px Inter, sans-serif';
+  ctx.fillStyle = '#0f172a';
+  ctx.fillText(fmtY(maxVal), padL - 6, padT + 8);
+  ctx.fillText(fmtY(minVal), padL - 6, padT + plotH);
 
-  // Red Extrema Dots on Curve
-  ctx.fillStyle = '#ff0000';
+  // Extrema Target Markers (Target Bullseye instead of plain red dot)
+  const drawTargetMarker = (pt, col) => {
+    if (!pt || !isFinite(pt.val)) return;
+    const px = xToPx(pt.x), py = yToPx(pt.val);
+    ctx.beginPath();
+    ctx.arc(px, py, 4.5, 0, Math.PI * 2);
+    ctx.fillStyle = col || '#e11d48';
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(px, py, 2, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+  };
+
   if (key === 'V') {
-    const corners = [];
-    if (extPos && isFinite(extPos.val)) corners.push(extPos);
-    if (extNeg && isFinite(extNeg.val)) {
-      corners.push(extNeg);
-      const endPlateau = solution.samples.filter(s => Math.abs(s.V - extNeg.val) < 1e-3);
-      if (endPlateau.length > 1) {
-        const lastPt = endPlateau[endPlateau.length - 1];
-        if (Math.abs(lastPt.x - extNeg.x) > 0.05) {
-          corners.push({ val: lastPt.V, x: lastPt.x });
-        }
-      }
-    }
-    corners.forEach(pt => {
-      ctx.beginPath();
-      ctx.arc(xToPx(pt.x), yToPx(pt.val), 3.2, 0, Math.PI * 2);
-      ctx.fill();
-    });
+    if (extPos && isFinite(extPos.val)) drawTargetMarker(extPos, '#0284c7');
+    if (extNeg && isFinite(extNeg.val)) drawTargetMarker(extNeg, '#e11d48');
   } else {
-    [extPos, extNeg].forEach(pt => {
-      if (pt && isFinite(pt.val) && Math.abs(pt.val) > 1e-6) {
-        ctx.beginPath();
-        ctx.arc(xToPx(pt.x), yToPx(pt.val), 3.2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    });
+    if (extPos && isFinite(extPos.val) && Math.abs(extPos.val) > 1e-6) drawTargetMarker(extPos, strokeCol);
+    if (extNeg && isFinite(extNeg.val) && Math.abs(extNeg.val) > 1e-6) drawTargetMarker(extNeg, strokeCol);
   }
 }
 
@@ -983,7 +1168,7 @@ function refreshCalculationReport() {
   const modelName = document.getElementById('repModelNameInput')?.value || model.name;
   const designer = document.getElementById('repDesignerInput')?.value || 'นาย ธนัตถ์ วงษ์อุ่น (ECE2NR68)';
   const repDate = document.getElementById('repDateInput')?.value || '2019/9/15';
-  const brandText = document.getElementById('repBrandTextInput')?.value || 'STRUCTURAL CALCULATOR';
+  const brandText = document.getElementById('repBrandTextInput')?.value || 'CIVILMECH STRUCTURAL STUDIO';
   const unitStr = unitSystem === 'metric'
     ? (isTH ? 'เมตริก (Metric) - (m), (kN)' : 'Metric - (m), (kN)')
     : (isTH ? 'อิมพีเรียล (Imperial) - (ft), (kip)' : 'Imperial - (ft), (kip)');
@@ -993,25 +1178,29 @@ function refreshCalculationReport() {
   document.querySelectorAll('.rep-date').forEach(el => el.innerText = repDate);
   document.querySelectorAll('.rep-units').forEach(el => el.innerText = unitStr);
 
-  // Update Logo Header across all sheets
-  ['sheet1LogoBox', 'sheet2LogoBox', 'sheet3LogoBox', 'sheet2DLogoBox', 'sheetTruss1LogoBox', 'sheetTruss2LogoBox'].forEach(boxId => {
+  // Update Logo Header across all sheets with modern CivilMech letterhead branding
+  ['sheet1LogoBox', 'sheet2LogoBox', 'sheet3LogoBox', 'sheet2DLogoBox', 'sheet2DLogoBox2', 'sheetTruss1LogoBox', 'sheetTruss2LogoBox', 'sheetTruss3LogoBox'].forEach(boxId => {
     const box = document.getElementById(boxId);
     if (!box) return;
     if (customLogoDataUrl) {
-      box.innerHTML = `<img src="${customLogoDataUrl}" class="h-9 object-contain" alt="Company Logo"><span class="text-base font-bold tracking-wider text-slate-700 ml-2">${brandText}</span>`;
+      box.innerHTML = `<img src="${customLogoDataUrl}" class="h-10 object-contain" alt="Company Logo"><span class="text-sm font-black tracking-tight text-slate-900 ml-2 uppercase">${brandText}</span>`;
     } else {
       box.innerHTML = `
-        <div class="w-9 h-7 rounded-md bg-slate-600 border-b-4 border-teal-400 flex items-center justify-center text-white">
-          <i class="fa-solid fa-cubes-stacked text-sm"></i>
+        <div class="w-10 h-10 rounded-xl bg-slate-900 border border-teal-500/40 flex items-center justify-center text-teal-400 shadow-sm shrink-0">
+          <i class="fa-solid fa-layer-group text-lg"></i>
         </div>
-        <span class="text-lg font-bold tracking-wider text-teal-600">${brandText}</span>
+        <div class="flex flex-col text-left">
+          <span class="text-sm font-black tracking-tight text-slate-900 uppercase">${brandText}</span>
+          <span class="text-[9px] text-teal-700 font-bold uppercase tracking-wider">Engineering Calculation Note</span>
+        </div>
       `;
     }
   });
 
   // 1D Report Population
   drawReportBeamSchematic('repSchematicCanvas1');
-  drawReportBeamSchematic('repSchematicCanvas2');
+  const schemCanvas2 = document.getElementById('repSchematicCanvas2');
+  if (schemCanvas2) drawReportBeamSchematic('repSchematicCanvas2');
 
   const E_MPa = Math.round(model.E * 1000);
   const I_mm4 = Math.round(model.I * 10000);
@@ -1023,7 +1212,169 @@ function refreshCalculationReport() {
     ? (isTH ? 'คงที่ (ไม่คิดหน้าตัด / โหมดโจทย์การบ้าน)' : 'Constant EI (No Cross-Section Mode)')
     : (isImp ? `${(Units.E(model.E) * Units.I(model.I)).toFixed(1)} kip·in²` : `${EI_Nmm2}`);
 
-  const supTypeTH = { pinned: 'จุดรองรับยึดหมุน (Pinned)', roller: 'จุดรองรับเลื่อนได้ (Roller)', fixed: 'จุดรองรับยึดแน่น (Fixed)' };
+  const supTypeTH = { pinned: 'ยึดหมุน (Pinned)', roller: 'เลื่อนได้ (Roller)', fixed: 'ยึดแน่น (Fixed)' };
+
+  // Executive KPI Ribbon population
+  const elSpan = document.getElementById('repKpiSpan');
+  if (elSpan) elSpan.innerText = `${+Units.len(model.length).toFixed(3)} ${Units.uLen()}`;
+
+  const elMaxM = document.getElementById('repKpiMaxM');
+  if (elMaxM && solution.maxM) elMaxM.innerText = `${Units.mom(Math.abs(solution.maxM.val)).toFixed(3)} ${Units.uMom()}`;
+
+  const elMaxV = document.getElementById('repKpiMaxV');
+  if (elMaxV && solution.maxPosV && solution.minNegV) {
+    const peakAbsV = Math.max(Math.abs(solution.maxPosV.val), Math.abs(solution.minNegV.val));
+    elMaxV.innerText = `${Units.force(peakAbsV).toFixed(3)} ${Units.uForce()}`;
+  }
+
+  const elMaxD = document.getElementById('repKpiMaxDefl');
+  if (elMaxD && solution.maxDelta) {
+    if (model.ignoreSection) {
+      elMaxD.innerText = `EIδ = ${Units.eiDelta(Math.abs(solution.maxDelta.val)).toFixed(1)}`;
+    } else {
+      elMaxD.innerText = `${Units.defl(Math.abs(solution.maxDelta.val)).toFixed(3)} ${Units.uDefl()}`;
+    }
+  }
+
+  // Modern Table 1: Supports & Reactions
+  const tbReacBody = document.getElementById('repReactionsTableBody');
+  const tbReacFoot = document.getElementById('repReactionsTableFoot');
+  if (tbReacBody && solution.reactions) {
+    let sumRy = 0;
+    tbReacBody.innerHTML = solution.reactions.map((r, idx) => {
+      const ryVal = r.ReportRy || 0;
+      sumRy += ryVal;
+      const typeLabel = isTH ? (supTypeTH[r.type] || r.type) : r.type.toUpperCase();
+      return `
+        <tr class="hover:bg-slate-50">
+          <td class="py-1 px-2.5 font-bold text-slate-800">R${idx + 1}</td>
+          <td class="py-1 px-2">${+Units.len(r.x).toFixed(3)}</td>
+          <td class="py-1 px-2 text-slate-600">${typeLabel}</td>
+          <td class="py-1 px-2 text-right font-bold text-emerald-600">${Units.force(ryVal).toFixed(3)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    if (tbReacFoot) {
+      tbReacFoot.innerHTML = `
+        <tr>
+          <td colspan="3" class="py-1 px-2 text-slate-700">ผลรวมแรงปฏิกิริยา (Total Reactions ΣRy):</td>
+          <td class="py-1 px-2 text-right font-bold text-emerald-700">${Units.force(sumRy).toFixed(3)} ${Units.uForce()}</td>
+        </tr>
+      `;
+    }
+  }
+
+  // Modern Table 2: Applied Loads Schedule
+  const tbLoadsBody = document.getElementById('repLoadsTableBody');
+  if (tbLoadsBody) {
+    const loadRows = [];
+    let lIdx = 1;
+    model.loads.forEach(l => {
+      if (l.type === 'point') {
+        loadRows.push(`
+          <tr class="hover:bg-slate-50">
+            <td class="py-1 px-2.5 font-bold text-slate-800">P${lIdx++}</td>
+            <td class="py-1 px-2"><span class="px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 font-semibold text-[10px]">Point</span></td>
+            <td class="py-1 px-2">${+Units.len(l.x).toFixed(3)}</td>
+            <td class="py-1 px-2 text-right font-bold text-rose-600">${+Units.force(l.P).toFixed(3)} ${Units.uForce()}</td>
+          </tr>
+        `);
+      } else if (l.type === 'udl') {
+        const magStr = (l.w2 !== undefined && Math.abs(l.w2 - l.w1) > 1e-4)
+          ? `${+Units.dist(l.w1).toFixed(2)} → ${+Units.dist(l.w2).toFixed(2)}`
+          : `${+Units.dist(l.w1).toFixed(2)}`;
+        loadRows.push(`
+          <tr class="hover:bg-slate-50">
+            <td class="py-1 px-2.5 font-bold text-slate-800">W${lIdx++}</td>
+            <td class="py-1 px-2"><span class="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-semibold text-[10px]">UDL</span></td>
+            <td class="py-1 px-2">${+Units.len(l.x1).toFixed(3)} - ${+Units.len(l.x2).toFixed(3)}</td>
+            <td class="py-1 px-2 text-right font-bold text-amber-700">${magStr} ${Units.uDist()}</td>
+          </tr>
+        `);
+      } else if (l.type === 'moment') {
+        loadRows.push(`
+          <tr class="hover:bg-slate-50">
+            <td class="py-1 px-2.5 font-bold text-slate-800">M${lIdx++}</td>
+            <td class="py-1 px-2"><span class="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 font-semibold text-[10px]">Moment</span></td>
+            <td class="py-1 px-2">${+Units.len(l.x).toFixed(3)}</td>
+            <td class="py-1 px-2 text-right font-bold text-indigo-700">${+Units.mom(l.M).toFixed(3)} ${Units.uMom()}</td>
+          </tr>
+        `);
+      }
+    });
+    if (loadRows.length === 0) {
+      loadRows.push(`<tr><td colspan="4" class="py-2 text-center text-slate-400">ไม่มีภาระแรงกระทำภายนอก (Unloaded)</td></tr>`);
+    }
+    tbLoadsBody.innerHTML = loadRows.join('');
+  }
+
+  // Modern Section Specification Grid Matrix
+  const secGrid = document.getElementById('repSectionPropsGrid');
+  const secBadge = document.getElementById('repSecBadgeMode');
+  if (secGrid) {
+    if (model.ignoreSection) {
+      if (secBadge) secBadge.innerText = isTH ? 'โหมดไม่คิดหน้าตัด (Constant EI)' : 'Constant EI Mode';
+      secGrid.innerHTML = `
+        <div class="bg-white border border-slate-200 rounded-lg p-2">
+          <div class="text-[10px] text-slate-400 uppercase">สถานะหน้าตัด (Section)</div>
+          <div class="font-bold text-slate-800 mt-0.5">ไม่ระบุหน้าตัด (Constant EI = 1)</div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg p-2">
+          <div class="text-[10px] text-slate-400 uppercase">สติฟเนสดัด (EI)</div>
+          <div class="font-bold text-slate-800 mt-0.5 font-mono">1.000 (คงที่ตลอดช่วง)</div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg p-2">
+          <div class="text-[10px] text-slate-400 uppercase">ความชันสัมพัทธ์ (EIθ)</div>
+          <div class="font-bold text-indigo-600 mt-0.5 font-mono">${Units.uEITheta()}</div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg p-2">
+          <div class="text-[10px] text-slate-400 uppercase">การแอ่นตัวสัมพัทธ์ (EIδ)</div>
+          <div class="font-bold text-teal-600 mt-0.5 font-mono">${Units.uEIDelta()}</div>
+        </div>
+      `;
+    } else {
+      if (secBadge) secBadge.innerText = isTH ? 'คิดหน้าตัดจริง (Real Section)' : 'Real Section Mode';
+      const Z_cm3 = (model.y > 0) ? (model.I / (model.y * 0.1)).toFixed(2) : '-';
+      const EI_kNm2 = (model.E * model.I * 0.01).toFixed(2);
+      secGrid.innerHTML = `
+        <div class="bg-white border border-slate-200 rounded-lg p-2">
+          <div class="text-[10px] text-slate-400 uppercase">ชื่อหน้าตัด (Section)</div>
+          <div class="font-bold text-slate-800 mt-0.5 truncate">${model.sectionName}</div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg p-2">
+          <div class="text-[10px] text-slate-400 uppercase">มอดุลัสยืดหยุ่น (E)</div>
+          <div class="font-bold text-slate-800 mt-0.5 font-mono">${Units.E(model.E).toFixed(1)} ${Units.uE()}</div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg p-2">
+          <div class="text-[10px] text-slate-400 uppercase">โมเมนต์ความเฉื่อย (Ix)</div>
+          <div class="font-bold text-slate-800 mt-0.5 font-mono">${Units.I(model.I).toFixed(1)} ${Units.uI()}</div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg p-2">
+          <div class="text-[10px] text-slate-400 uppercase">พื้นที่หน้าตัด (Area A)</div>
+          <div class="font-bold text-slate-800 mt-0.5 font-mono">${Units.A(model.A).toFixed(1)} ${Units.uA()}</div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg p-2">
+          <div class="text-[10px] text-slate-400 uppercase">ระยะขอบนอกสุด (y)</div>
+          <div class="font-bold text-slate-800 mt-0.5 font-mono">${Units.depth(model.y).toFixed(1)} ${Units.uDepth()}</div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg p-2">
+          <div class="text-[10px] text-slate-400 uppercase">โมดูลัสหน้าตัด (Zx = I/y)</div>
+          <div class="font-bold text-slate-800 mt-0.5 font-mono">${Z_cm3} ${Units.uS()}</div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg p-2">
+          <div class="text-[10px] text-slate-400 uppercase">สติฟเนสความแข็งดัด (EI)</div>
+          <div class="font-bold text-indigo-700 mt-0.5 font-mono">${EI_kNm2} ${Units.uEI()}</div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg p-2">
+          <div class="text-[10px] text-slate-400 uppercase">รัศมีไจเรชัน (r = √(I/A))</div>
+          <div class="font-bold text-slate-800 mt-0.5 font-mono">${(Math.sqrt(Math.max(1e-6, model.I / model.A))).toFixed(2)} ${Units.uR()}</div>
+        </div>
+      `;
+    }
+  }
+
+  // Backward compatibility text blocks
   const rows = [];
   rows.push(`<tr><td>EI = ${EI_disp}</td><td></td><td></td></tr>`);
   rows.push(`<tr><td>${isTH ? 'ความยาวคาน (Length)' : 'Length'}</td><td>0 | ${+Units.len(model.length).toFixed(3)}</td><td></td></tr>`);
@@ -1045,7 +1396,6 @@ function refreshCalculationReport() {
   const tbody = document.getElementById('repInputTableBody');
   if (tbody) tbody.innerHTML = rows.join('');
 
-  // Section Properties Text Block (Matching Sheet 1 of 3)
   const secPropsEl = document.getElementById('repSectionPropsText');
   if (secPropsEl) {
     if (model.ignoreSection) {
@@ -1079,9 +1429,8 @@ function refreshCalculationReport() {
     }
   }
 
-  // Reactions Text Block (Matching Sheet 1 of 3)
   const reacEl = document.getElementById('repReactionsText');
-  if (reacEl) {
+  if (reacEl && solution.reactions) {
     reacEl.innerHTML = solution.reactions.map(r =>
       isTH
         ? `<div>ตำแหน่งที่: ${+Units.len(r.x).toFixed(3)} (${Units.uLen()}), แรงปฏิกิริยา (Force Reaction) = ${Units.force(r.ReportRy).toFixed(4)} (${Units.uForce()})</div>`
@@ -1089,7 +1438,7 @@ function refreshCalculationReport() {
     ).join('');
   }
 
-  // Sheet 2 of 3 Diagrams & Captions
+  // Sheet 2 of 3 Diagrams & Badges
   const uF = Units.uForce();
   const uM = Units.uMomDash();
   const uD = Units.uDefl();
@@ -1110,159 +1459,319 @@ function refreshCalculationReport() {
     drawReportDiagram('repPlotStress', 'sigma', `Stress (${uS})`, solution.maxSigma, { val: 0, x: 0 }, false, Units.stress);
   }
 
-  // Find plateau range for minNegV if applicable
   let negVLocStr = Units.len(solution.minNegV.x).toFixed(3);
   const plateauPts = solution.samples.filter(s => Math.abs(s.V - solution.minNegV.val) < 1e-3);
   if (plateauPts.length > 1) {
     const firstX = plateauPts[0].x;
     const lastX = plateauPts[plateauPts.length - 1].x;
     if (Math.abs(lastX - firstX) > 0.05) {
-      negVLocStr = `${Units.len(firstX).toFixed(3)}, ${Units.len(lastX).toFixed(3)}`;
+      negVLocStr = `${Units.len(firstX).toFixed(3)} - ${Units.len(lastX).toFixed(3)}`;
     }
   }
 
-  document.getElementById('repCapShear').innerHTML = isTH ? `
-    <div>แรงเฉือนบวกสูงสุด (+V) (${uF}): ${Units.force(solution.maxPosV.val).toFixed(3)}, ที่ตำแหน่ง (${uL}): ${Units.len(solution.maxPosV.x).toFixed(3)}</div>
-    <div>แรงเฉือนลบสูงสุด (-V) (${uF}): ${Units.force(solution.minNegV.val).toFixed(3)}, ที่ตำแหน่ง (${uL}): ${negVLocStr}</div>
-  ` : `
-    <div>(Max +ve)Shear Load (${uF}): ${Units.force(solution.maxPosV.val).toFixed(3)}, Location (${uL}): ${Units.len(solution.maxPosV.x).toFixed(3)}</div>
-    <div>(Max -ve)Shear Load (${uF}): ${Units.force(solution.minNegV.val).toFixed(3)}, Location (${uL}): ${negVLocStr}</div>
-  `;
-  document.getElementById('repCapMoment').innerHTML = isTH ? `
-    <div>โมเมนต์ดัดบวกสูงสุด (+M) (${uM}): ${Units.mom(solution.maxPosM.val).toFixed(3)}, ที่ตำแหน่ง (${uL}): ${Units.len(solution.maxPosM.x).toFixed(3)}</div>
-    <div>โมเมนต์ดัดลบสูงสุด (-M) (${uM}): ${Units.mom(solution.minNegM.val).toFixed(3)}, ที่ตำแหน่ง (${uL}): ${Units.len(solution.minNegM.x).toFixed(3)}</div>
-  ` : `
-    <div>(Max +ve)Moment Load (${uM}): ${Units.mom(solution.maxPosM.val).toFixed(3)}, Location (${uL}): ${Units.len(solution.maxPosM.x).toFixed(3)}</div>
-    <div>(Max -ve)Moment Load (${uM}): ${Units.mom(solution.minNegM.val).toFixed(3)}, Location (${uL}): ${Units.len(solution.minNegM.x).toFixed(3)}</div>
-  `;
+  // Modern Responsive Pill Badges for Sheet 2 Captions
+  const capShear = document.getElementById('repCapShear');
+  if (capShear) {
+    capShear.innerHTML = `
+      <div class="flex flex-wrap items-center justify-center gap-2 mt-1">
+        <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-sky-50 border border-sky-200 text-sky-800 text-[10px] font-mono">
+          <strong class="mr-1 text-sky-950">+V_max:</strong> ${Units.force(solution.maxPosV.val).toFixed(3)} ${uF} <span class="text-slate-400 ml-1">(x = ${Units.len(solution.maxPosV.x).toFixed(3)}${uL})</span>
+        </span>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-rose-50 border border-rose-200 text-rose-800 text-[10px] font-mono">
+          <strong class="mr-1 text-rose-950">-V_max:</strong> ${Units.force(solution.minNegV.val).toFixed(3)} ${uF} <span class="text-slate-400 ml-1">(x = ${negVLocStr}${uL})</span>
+        </span>
+      </div>
+    `;
+  }
 
-  if (model.ignoreSection) {
-    document.getElementById('repCapSlope').innerHTML = isTH ? `
-      <div>ความชันสัมพัทธ์บวกสูงสุด (+EIθ) (${uEITheta}): ${Units.eiTheta(solution.maxPosSlope.val).toFixed(3)}, ที่ตำแหน่ง (${uL}): ${Units.len(solution.maxPosSlope.x).toFixed(3)}</div>
-      <div>ความชันสัมพัทธ์ลบสูงสุด (-EIθ) (${uEITheta}): ${Units.eiTheta(solution.minNegSlope.val).toFixed(3)}, ที่ตำแหน่ง (${uL}): ${Units.len(solution.minNegSlope.x).toFixed(3)}</div>
-    ` : `
-      <div>(Max +ve)Relative Slope EIθ (${uEITheta}): ${Units.eiTheta(solution.maxPosSlope.val).toFixed(3)}, Location (${uL}): ${Units.len(solution.maxPosSlope.x).toFixed(3)}</div>
-      <div>(Max -ve)Relative Slope EIθ (${uEITheta}): ${Units.eiTheta(solution.minNegSlope.val).toFixed(3)}, Location (${uL}): ${Units.len(solution.minNegSlope.x).toFixed(3)}</div>
+  const capMoment = document.getElementById('repCapMoment');
+  if (capMoment) {
+    capMoment.innerHTML = `
+      <div class="flex flex-wrap items-center justify-center gap-2 mt-1">
+        <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-800 text-[10px] font-mono">
+          <strong class="mr-1 text-indigo-950">+M_max (Sagging):</strong> ${Units.mom(solution.maxPosM.val).toFixed(3)} ${uM} <span class="text-slate-400 ml-1">(x = ${Units.len(solution.maxPosM.x).toFixed(3)}${uL})</span>
+        </span>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-mono">
+          <strong class="mr-1 text-amber-950">-M_max (Hogging):</strong> ${Units.mom(solution.minNegM.val).toFixed(3)} ${uM} <span class="text-slate-400 ml-1">(x = ${Units.len(solution.minNegM.x).toFixed(3)}${uL})</span>
+        </span>
+      </div>
     `;
-    document.getElementById('repCapDefl').innerHTML = isTH ? `
-      <div>การแอ่นตัวสัมพัทธ์บวกสูงสุด (+EIδ) (${uEIDelta}): ${Units.eiDelta(solution.maxPosDelta.val).toFixed(3)}, ที่ตำแหน่ง (${uL}): ${Units.len(solution.maxPosDelta.x).toFixed(3)}</div>
-      <div>การแอ่นตัวสัมพัทธ์ลบสูงสุด (-EIδ) (${uEIDelta}): ${Units.eiDelta(solution.minNegDelta.val).toFixed(3)}, ที่ตำแหน่ง (${uL}): ${Units.len(solution.minNegDelta.x).toFixed(3)}</div>
-    ` : `
-      <div>(Max +ve)Relative Deflection EIδ (${uEIDelta}): ${Units.eiDelta(solution.maxPosDelta.val).toFixed(3)}, Location (${uL}): ${Units.len(solution.maxPosDelta.x).toFixed(3)}</div>
-      <div>(Max -ve)Relative Deflection EIδ (${uEIDelta}): ${Units.eiDelta(solution.minNegDelta.val).toFixed(3)}, Location (${uL}): ${Units.len(solution.minNegDelta.x).toFixed(3)}</div>
-    `;
-    document.getElementById('repCapStress').innerHTML = isTH ? `
-      <div>หน่วยแรงดัด (Bending Stress): ข้ามการคำนวณเนื่องจากอยู่ในโหมดไม่คิดหน้าตัด (EI คงที่)</div>
-    ` : `
-      <div>Bending Stress: Bypassed in No Cross-Section (Constant EI) Mode</div>
-    `;
-    document.getElementById('repStressSummaryBox').innerHTML = isTH ? `
-      <div>โมเมนต์ดัดสูงสุดสัมบูรณ์ |M_max|: <strong>${Units.mom(Math.abs(solution.maxM.val)).toFixed(3)} ${uM}</strong></div>
-      <div>โหมดการวิเคราะห์: <strong>ไม่คิดหน้าตัด (โหมดโจทย์การบ้านทั่วไป)</strong></div>
-      <div>ความชันสัมพัทธ์สูงสุด |EIθ_max|: <strong>${Units.eiTheta(Math.abs(solution.maxSlope.val)).toFixed(3)} ${uEITheta}</strong></div>
-      <div>การแอ่นตัวสัมพัทธ์สูงสุด |EIδ_max|: <strong>${Units.eiDelta(Math.abs(solution.maxDelta.val)).toFixed(3)} ${uEIDelta}</strong></div>
-    ` : `
-      <div>Max Bending Moment |M_max|: <strong>${Units.mom(Math.abs(solution.maxM.val)).toFixed(3)} ${uM}</strong></div>
-      <div>Analysis Mode: <strong>No Cross-Section (Constant EI Homework Mode)</strong></div>
-      <div>Max Relative Slope |EIθ_max|: <strong>${Units.eiTheta(Math.abs(solution.maxSlope.val)).toFixed(3)} ${uEITheta}</strong></div>
-      <div>Max Relative Deflection |EIδ_max|: <strong>${Units.eiDelta(Math.abs(solution.maxDelta.val)).toFixed(3)} ${uEIDelta}</strong></div>
-    `;
-    document.getElementById('repSectionDetailBox').innerHTML = isTH ? `
-      <div>สถานะหน้าตัด: <strong>ไม่ระบุหน้าตัด (EI = คงที่)</strong></div>
-      <div>แรงปฏิกิริยาและ SFD/BMD: <strong>เป็นอิสระจากหน้าตัด 100%</strong></div>
-      <div>วิธีแปลงเป็นค่าจริง: <strong>θ(rad) = EIθ / EI, &nbsp; δ = EIδ / EI</strong></div>
-      <div>ความเค้นดัด σ = My/I: <strong>ไม่ได้คิดในโหมดนี้</strong></div>
-    ` : `
-      <div>Section Status: <strong>No Cross-Section Specified (EI = const)</strong></div>
-      <div>Reactions & SFD/BMD: <strong>100% Independent of Cross-Section</strong></div>
-      <div>Conversion to Actual: <strong>θ(rad) = EIθ / EI, &nbsp; δ = EIδ / EI</strong></div>
-      <div>Bending Stress σ = My/I: <strong>Bypassed in this mode</strong></div>
-    `;
-  } else {
-    document.getElementById('repCapSlope').innerHTML = isTH ? `
-      <div>มุมลาดชันบวกสูงสุด (+θ) (Deg): ${solution.maxPosSlope.val.toFixed(3)}, ที่ตำแหน่ง (${uL}): ${Units.len(solution.maxPosSlope.x).toFixed(3)}</div>
-      <div>มุมลาดชันลบสูงสุด (-θ) (Deg): ${solution.minNegSlope.val.toFixed(3)}, ที่ตำแหน่ง (${uL}): ${Units.len(solution.minNegSlope.x).toFixed(3)}</div>
-    ` : `
-      <div>(Max +ve)Slope (Deg): ${solution.maxPosSlope.val.toFixed(3)}, Location (${uL}): ${Units.len(solution.maxPosSlope.x).toFixed(3)}</div>
-      <div>(Max -ve)Slope (Deg): ${solution.minNegSlope.val.toFixed(3)}, Location (${uL}): ${Units.len(solution.minNegSlope.x).toFixed(3)}</div>
-    `;
-    document.getElementById('repCapDefl').innerHTML = isTH ? `
-      <div>การแอ่นตัวบวกสูงสุด (+δ) (${uD}): ${Units.defl(solution.maxPosDelta.val).toFixed(3)}, ที่ตำแหน่ง (${uL}): ${Units.len(solution.maxPosDelta.x).toFixed(3)}</div>
-      <div>การแอ่นตัวลบสูงสุด (-δ) (${uD}): ${Units.defl(solution.minNegDelta.val).toFixed(3)}, ที่ตำแหน่ง (${uL}): ${Units.len(solution.minNegDelta.x).toFixed(3)}</div>
-    ` : `
-      <div>(Max +ve)Deflection (${uD}): ${Units.defl(solution.maxPosDelta.val).toFixed(3)}, Location (${uL}): ${Units.len(solution.maxPosDelta.x).toFixed(3)}</div>
-      <div>(Max -ve)Deflection (${uD}): ${Units.defl(solution.minNegDelta.val).toFixed(3)}, Location (${uL}): ${Units.len(solution.minNegDelta.x).toFixed(3)}</div>
-    `;
-    document.getElementById('repCapStress').innerHTML = isTH ? `
-      <div>หน่วยแรงดัดสูงสุดที่ขอบหน้าตัด (Max Bending Stress) (${uS}): ${Units.stress(solution.maxSigma.val).toFixed(2)}, ที่ตำแหน่ง (${uL}): ${Units.len(solution.maxSigma.x).toFixed(3)}</div>
-    ` : `
-      <div>(Max Extreme Fiber) Bending Stress (${uS}): ${Units.stress(solution.maxSigma.val).toFixed(2)}, Location (${uL}): ${Units.len(solution.maxSigma.x).toFixed(3)}</div>
-    `;
+  }
 
-    // Sheet 3 Detailed Boxes
-    const S_mm3 = I_mm4 / model.y;
-    const S_cm3 = model.I / (model.y / 10);
-    const fyDisp = isImp ? '36.26 ksi' : '250 MPa';
-    document.getElementById('repStressSummaryBox').innerHTML = isTH ? `
-      <div>โมเมนต์ดัดสูงสุดสัมบูรณ์ |M_max|: <strong>${Units.mom(Math.abs(solution.maxM.val)).toFixed(3)} ${uM}</strong></div>
-      <div>มอดุลัสหน้าตัด S = I / y: <strong>${isImp ? `${Units.S(S_cm3).toFixed(2)} in³` : `${S_mm3.toFixed(0)} mm³`}</strong></div>
-      <div>ความเค้นดัดสูงสุด σ = M / S: <strong>${Units.stress(solution.maxSigma.val).toFixed(2)} ${uS}</strong></div>
-      <div>กำลังครากที่ยอมให้ Fy (${fyDisp}): <strong>${solution.maxSigma.val <= 250 ? 'ผ่านเกณฑ์ (PASS)' : `เกินพิกัด (${fyDisp})`}</strong></div>
-    ` : `
-      <div>Max Bending Moment |M_max|: <strong>${Units.mom(Math.abs(solution.maxM.val)).toFixed(3)} ${uM}</strong></div>
-      <div>Section Modulus S = I / y: <strong>${isImp ? `${Units.S(S_cm3).toFixed(2)} in³` : `${S_mm3.toFixed(0)} mm³`}</strong></div>
-      <div>Max Bending Stress σ = M / S: <strong>${Units.stress(solution.maxSigma.val).toFixed(2)} ${uS}</strong></div>
-      <div>Allowable Yield Stress Fy (${fyDisp}): <strong>${solution.maxSigma.val <= 250 ? 'PASS (OK)' : `EXCEEDS ${fyDisp}`}</strong></div>
-    `;
-    const EI_MNm2 = model.E * model.I * 1e-5;
-    document.getElementById('repSectionDetailBox').innerHTML = isTH ? `
-      <div>ชื่อหน้าตัดโครงสร้าง: <strong>${model.sectionName}</strong></div>
-      <div>ความแกร่งรับแรงดัด (Flexural Rigidity EI): <strong>${isImp ? `${Units.EI(EI_MNm2).toFixed(2)} kip·ft²` : `${(EI_Nmm2 / 1e12).toFixed(4)} × 10¹² N·mm²`}</strong></div>
-      <div>ความแกร่งตามแนวแกน (Axial Stiffness EA): <strong>${isImp ? `${Units.force((E_MPa * A_mm2) / 1e3).toFixed(1)} kip` : `${((E_MPa * A_mm2) / 1e6).toFixed(2)} MN`}</strong></div>
-      <div>อัตราส่วนช่วงคานต่อการแอ่นตัว L / |δ|: <strong>L / ${Math.round((model.length * 1000) / Math.max(0.01, Math.abs(solution.maxDelta.val)))}</strong></div>
-    ` : `
-      <div>Section Designation: <strong>${model.sectionName}</strong></div>
-      <div>Flexural Rigidity EI: <strong>${isImp ? `${Units.EI(EI_MNm2).toFixed(2)} kip·ft²` : `${(EI_Nmm2 / 1e12).toFixed(4)} × 10¹² N·mm²`}</strong></div>
-      <div>Axial Stiffness EA: <strong>${isImp ? `${Units.force((E_MPa * A_mm2) / 1e3).toFixed(1)} kip` : `${((E_MPa * A_mm2) / 1e6).toFixed(2)} MN`}</strong></div>
-      <div>Span-to-Deflection Ratio L / |δ|: <strong>L / ${Math.round((model.length * 1000) / Math.max(0.01, Math.abs(solution.maxDelta.val)))}</strong></div>
-    `;
+  const capSlope = document.getElementById('repCapSlope');
+  if (capSlope) {
+    if (model.ignoreSection) {
+      capSlope.innerHTML = `
+        <div class="flex flex-wrap items-center justify-center gap-2 mt-1">
+          <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-purple-50 border border-purple-200 text-purple-800 text-[10px] font-mono">
+            <strong class="mr-1">+EIθ_max:</strong> ${Units.eiTheta(solution.maxPosSlope.val).toFixed(3)} ${uEITheta} <span class="text-slate-400 ml-1">(x = ${Units.len(solution.maxPosSlope.x).toFixed(3)}${uL})</span>
+          </span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-purple-50 border border-purple-200 text-purple-800 text-[10px] font-mono">
+            <strong class="mr-1">-EIθ_max:</strong> ${Units.eiTheta(solution.minNegSlope.val).toFixed(3)} ${uEITheta} <span class="text-slate-400 ml-1">(x = ${Units.len(solution.minNegSlope.x).toFixed(3)}${uL})</span>
+          </span>
+        </div>
+      `;
+    } else {
+      capSlope.innerHTML = `
+        <div class="flex flex-wrap items-center justify-center gap-2 mt-1">
+          <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-purple-50 border border-purple-200 text-purple-800 text-[10px] font-mono">
+            <strong class="mr-1">+θ_max:</strong> ${solution.maxPosSlope.val.toFixed(3)}° <span class="text-slate-400 ml-1">(x = ${Units.len(solution.maxPosSlope.x).toFixed(3)}${uL})</span>
+          </span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-purple-50 border border-purple-200 text-purple-800 text-[10px] font-mono">
+            <strong class="mr-1">-θ_max:</strong> ${solution.minNegSlope.val.toFixed(3)}° <span class="text-slate-400 ml-1">(x = ${Units.len(solution.minNegSlope.x).toFixed(3)}${uL})</span>
+          </span>
+        </div>
+      `;
+    }
+  }
+
+  const capDefl = document.getElementById('repCapDefl');
+  if (capDefl) {
+    if (model.ignoreSection) {
+      capDefl.innerHTML = `
+        <div class="flex flex-wrap items-center justify-center gap-2 mt-1">
+          <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-teal-50 border border-teal-200 text-teal-800 text-[10px] font-mono">
+            <strong class="mr-1">+EIδ_max:</strong> ${Units.eiDelta(solution.maxPosDelta.val).toFixed(3)} ${uEIDelta} <span class="text-slate-400 ml-1">(x = ${Units.len(solution.maxPosDelta.x).toFixed(3)}${uL})</span>
+          </span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-teal-50 border border-teal-200 text-teal-800 text-[10px] font-mono">
+            <strong class="mr-1">-EIδ_max:</strong> ${Units.eiDelta(solution.minNegDelta.val).toFixed(3)} ${uEIDelta} <span class="text-slate-400 ml-1">(x = ${Units.len(solution.minNegDelta.x).toFixed(3)}${uL})</span>
+          </span>
+        </div>
+      `;
+    } else {
+      const spanRatio = Math.round((model.length * 1000) / Math.max(0.001, Math.abs(solution.maxDelta.val)));
+      capDefl.innerHTML = `
+        <div class="flex flex-wrap items-center justify-center gap-2 mt-1">
+          <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-teal-50 border border-teal-200 text-teal-800 text-[10px] font-mono">
+            <strong class="mr-1">|δ_max|:</strong> ${Units.defl(Math.abs(solution.maxDelta.val)).toFixed(3)} ${uD} <span class="text-slate-400 ml-1">(x = ${Units.len(solution.maxDelta.x).toFixed(3)}${uL})</span>
+          </span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-mono">
+            <strong class="mr-1">Deflection Check:</strong> L / ${spanRatio} ${spanRatio >= 250 ? '✓ (PASS ≤ L/250)' : '⚠ (Exceeds L/250)'}
+          </span>
+        </div>
+      `;
+    }
+  }
+
+  const capStress = document.getElementById('repCapStress');
+  if (capStress) {
+    if (model.ignoreSection) {
+      capStress.innerHTML = `<span class="text-slate-400 text-xs">หน่วยแรงดัด (Bending Stress): ข้ามการคำนวณเนื่องจากอยู่ในโหมดไม่คิดหน้าตัด (Constant EI)</span>`;
+    } else {
+      capStress.innerHTML = `
+        <div class="flex flex-wrap items-center justify-center gap-2 mt-1">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-md bg-orange-50 border border-orange-200 text-orange-900 text-[10px] font-mono">
+            <strong class="mr-1">Max Extreme Fiber Stress (σ_max):</strong> ${Units.stress(solution.maxSigma.val).toFixed(2)} ${uS} <span class="text-slate-400 ml-1">(x = ${Units.len(solution.maxSigma.x).toFixed(3)}${uL})</span>
+          </span>
+        </div>
+      `;
+    }
+  }
+
+  // Sheet 3 Detailed Boxes
+  const stressSumBox = document.getElementById('repStressSummaryBox');
+  const secDetailBox = document.getElementById('repSectionDetailBox');
+  if (stressSumBox) {
+    if (model.ignoreSection) {
+      stressSumBox.innerHTML = isTH ? `
+        <div>โมเมนต์ดัดสูงสุดสัมบูรณ์ |M_max|: <strong>${Units.mom(Math.abs(solution.maxM.val)).toFixed(3)} ${uM}</strong></div>
+        <div>โหมดการวิเคราะห์: <strong>ไม่คิดหน้าตัด (โหมดโจทย์การบ้านทั่วไป)</strong></div>
+        <div>ความชันสัมพัทธ์สูงสุด |EIθ_max|: <strong>${Units.eiTheta(Math.abs(solution.maxSlope.val)).toFixed(3)} ${uEITheta}</strong></div>
+        <div>การแอ่นตัวสัมพัทธ์สูงสุด |EIδ_max|: <strong>${Units.eiDelta(Math.abs(solution.maxDelta.val)).toFixed(3)} ${uEIDelta}</strong></div>
+      ` : `
+        <div>Max Bending Moment |M_max|: <strong>${Units.mom(Math.abs(solution.maxM.val)).toFixed(3)} ${uM}</strong></div>
+        <div>Analysis Mode: <strong>No Cross-Section (Constant EI Homework Mode)</strong></div>
+        <div>Max Relative Slope |EIθ_max|: <strong>${Units.eiTheta(Math.abs(solution.maxSlope.val)).toFixed(3)} ${uEITheta}</strong></div>
+        <div>Max Relative Deflection |EIδ_max|: <strong>${Units.eiDelta(Math.abs(solution.maxDelta.val)).toFixed(3)} ${uEIDelta}</strong></div>
+      `;
+    } else {
+      const S_mm3 = I_mm4 / model.y;
+      const S_cm3 = model.I / (model.y / 10);
+      const fyDisp = isImp ? '36.26 ksi' : '250 MPa';
+      stressSumBox.innerHTML = isTH ? `
+        <div>โมเมนต์ดัดสูงสุดสัมบูรณ์ |M_max|: <strong>${Units.mom(Math.abs(solution.maxM.val)).toFixed(3)} ${uM}</strong></div>
+        <div>มอดุลัสหน้าตัด S = I / y: <strong>${isImp ? `${Units.S(S_cm3).toFixed(2)} in³` : `${S_mm3.toFixed(0)} mm³`}</strong></div>
+        <div>ความเค้นดัดสูงสุด σ = M / S: <strong>${Units.stress(solution.maxSigma.val).toFixed(2)} ${uS}</strong></div>
+        <div>กำลังครากที่ยอมให้ Fy (${fyDisp}): <strong>${solution.maxSigma.val <= 250 ? 'ผ่านเกณฑ์ (PASS)' : `เกินพิกัด (${fyDisp})`}</strong></div>
+      ` : `
+        <div>Max Bending Moment |M_max|: <strong>${Units.mom(Math.abs(solution.maxM.val)).toFixed(3)} ${uM}</strong></div>
+        <div>Section Modulus S = I / y: <strong>${isImp ? `${Units.S(S_cm3).toFixed(2)} in³` : `${S_mm3.toFixed(0)} mm³`}</strong></div>
+        <div>Max Bending Stress σ = M / S: <strong>${Units.stress(solution.maxSigma.val).toFixed(2)} ${uS}</strong></div>
+        <div>Allowable Yield Stress Fy (${fyDisp}): <strong>${solution.maxSigma.val <= 250 ? 'PASS (OK)' : `EXCEEDS ${fyDisp}`}</strong></div>
+      `;
+    }
+  }
+
+  if (secDetailBox) {
+    if (model.ignoreSection) {
+      secDetailBox.innerHTML = isTH ? `
+        <div>สถานะหน้าตัด: <strong>ไม่ระบุหน้าตัด (EI = คงที่)</strong></div>
+        <div>แรงปฏิกิริยาและ SFD/BMD: <strong>เป็นอิสระจากหน้าตัด 100%</strong></div>
+        <div>วิธีแปลงเป็นค่าจริง: <strong>θ(rad) = EIθ / EI, &nbsp; δ = EIδ / EI</strong></div>
+        <div>ความเค้นดัด σ = My/I: <strong>ไม่ได้คิดในโหมดนี้</strong></div>
+      ` : `
+        <div>Section Status: <strong>No Cross-Section Specified (EI = const)</strong></div>
+        <div>Reactions & SFD/BMD: <strong>100% Independent of Cross-Section</strong></div>
+        <div>Conversion to Actual: <strong>θ(rad) = EIθ / EI, &nbsp; δ = EIδ / EI</strong></div>
+        <div>Bending Stress σ = My/I: <strong>Bypassed in this mode</strong></div>
+      `;
+    } else {
+      const EI_MNm2 = model.E * model.I * 1e-5;
+      secDetailBox.innerHTML = isTH ? `
+        <div>ชื่อหน้าตัดโครงสร้าง: <strong>${model.sectionName}</strong></div>
+        <div>ความแกร่งรับแรงดัด (Flexural Rigidity EI): <strong>${isImp ? `${Units.EI(EI_MNm2).toFixed(2)} kip·ft²` : `${(EI_Nmm2 / 1e12).toFixed(4)} × 10¹² N·mm²`}</strong></div>
+        <div>ความแกร่งตามแนวแกน (Axial Stiffness EA): <strong>${isImp ? `${Units.force((E_MPa * A_mm2) / 1e3).toFixed(1)} kip` : `${((E_MPa * A_mm2) / 1e6).toFixed(2)} MN`}</strong></div>
+        <div>อัตราส่วนช่วงคานต่อการแอ่นตัว L / |δ|: <strong>L / ${Math.round((model.length * 1000) / Math.max(0.01, Math.abs(solution.maxDelta.val)))}</strong></div>
+      ` : `
+        <div>Section Designation: <strong>${model.sectionName}</strong></div>
+        <div>Flexural Rigidity EI: <strong>${isImp ? `${Units.EI(EI_MNm2).toFixed(2)} kip·ft²` : `${(EI_Nmm2 / 1e12).toFixed(4)} × 10¹² N·mm²`}</strong></div>
+        <div>Axial Stiffness EA: <strong>${isImp ? `${Units.force((E_MPa * A_mm2) / 1e3).toFixed(1)} kip` : `${((E_MPa * A_mm2) / 1e6).toFixed(2)} MN`}</strong></div>
+        <div>Span-to-Deflection Ratio L / |δ|: <strong>L / ${Math.round((model.length * 1000) / Math.max(0.01, Math.abs(solution.maxDelta.val)))}</strong></div>
+      `;
+    }
   }
 
   // 2D Structural Report Population
-  document.getElementById('rep2DModelTitle').innerText = frame2D.title;
+  const rep2DTitleEl = document.getElementById('rep2DModelTitle');
+  if (rep2DTitleEl) rep2DTitleEl.innerText = frame2D.title;
+  document.querySelectorAll('.rep2DModelTitleEcho').forEach(el => el.innerText = frame2D.title);
   render2DWorkspace('rep2DSnapshotCanvas');
 
+  // Compute 2D Frame KPIs
+  let maxAbsN = 0, maxAbsV = 0, maxAbsM = 0;
+  frame2D.members.forEach(m => {
+    maxAbsN = Math.max(maxAbsN, Math.abs(m.N || 0));
+    maxAbsV = Math.max(maxAbsV, Math.abs(m.maxAbsV || 0));
+    maxAbsM = Math.max(maxAbsM, Math.abs(m.maxAbsM || 0));
+  });
+
+  let maxDefl2D = 0;
+  frame2D.nodes.forEach(n => {
+    const d = Math.sqrt((n.ux || 0) * (n.ux || 0) + (n.uy || 0) * (n.uy || 0)) * 1000;
+    maxDefl2D = Math.max(maxDefl2D, d);
+  });
+
+  const rep2DKpiTopo = document.getElementById('rep2DKpiTopology');
+  if (rep2DKpiTopo) rep2DKpiTopo.innerText = `${frame2D.nodes.length} Nodes • ${frame2D.members.length} Members`;
+
+  const rep2DKpiN = document.getElementById('rep2DKpiMaxN');
+  if (rep2DKpiN) rep2DKpiN.innerText = `${Units.force(maxAbsN).toFixed(2)} ${Units.uForce()}`;
+
+  const rep2DKpiM = document.getElementById('rep2DKpiMaxM');
+  if (rep2DKpiM) rep2DKpiM.innerText = `${Units.mom(maxAbsM).toFixed(2)} ${Units.uMom()}`;
+
+  const rep2DKpiV = document.getElementById('rep2DKpiMaxV');
+  if (rep2DKpiV) rep2DKpiV.innerText = `${Units.force(maxAbsV).toFixed(2)} ${Units.uForce()}`;
+
+  const rep2DKpiD = document.getElementById('rep2DKpiMaxDefl');
+  if (rep2DKpiD) rep2DKpiD.innerText = `${Units.defl(maxDefl2D).toFixed(2)} ${Units.uDefl()}`;
+
+  // 1. Support Reactions Schedule & Equilibrium Check
   const rep2DReac = document.getElementById('rep2DReactionsTable');
   if (rep2DReac) {
+    let sumRx = 0, sumRy = 0, sumMz = 0;
+    const supNodes = frame2D.nodes.filter(n => n.support && n.support !== 'none');
+    supNodes.forEach(n => {
+      sumRx += (n.rx || 0);
+      sumRy += (n.ry || 0);
+      sumMz += (n.rmz || 0);
+    });
+
     rep2DReac.innerHTML = `
-      <thead><tr><th>${isTH ? 'จุดรองรับ (Node)' : 'Support Node'}</th><th>${isTH ? 'ชนิด (Type)' : 'Type'}</th><th>Rx (${uF})</th><th>Ry (${uF})</th><th>Mz (${uM})</th></tr></thead>
+      <thead>
+        <tr class="bg-slate-100 text-slate-700">
+          <th class="py-1.5 px-3 font-bold border-b border-slate-300 text-left">${isTH ? 'จุดรองรับ (Support Node)' : 'Support Node'}</th>
+          <th class="py-1.5 px-2 font-bold border-b border-slate-300 text-center">${isTH ? 'ชนิด (Type)' : 'Type'}</th>
+          <th class="py-1.5 px-2 font-bold border-b border-slate-300 text-right">Rx (${uF})</th>
+          <th class="py-1.5 px-2 font-bold border-b border-slate-300 text-right">Ry (${uF})</th>
+          <th class="py-1.5 px-3 font-bold border-b border-slate-300 text-right">Mz (${uM})</th>
+        </tr>
+      </thead>
       <tbody>
-        ${frame2D.nodes.filter(n => n.support && n.support !== 'none').map(n => `
-          <tr><td>N${n.id} (${+Units.len(n.x).toFixed(2)}${uL}, ${+Units.len(n.y).toFixed(2)}${uL})</td><td>${n.support}</td><td>${Units.force(n.rx || 0).toFixed(3)}</td><td>${Units.force(n.ry || 0).toFixed(3)}</td><td>${Units.mom(n.rmz || 0).toFixed(3)}</td></tr>
+        ${supNodes.map(n => `
+          <tr class="border-b border-slate-200/70 hover:bg-slate-50">
+            <td class="py-1.5 px-3 font-mono font-bold text-slate-800">Node N${n.id} <span class="font-normal text-slate-500">(${+Units.len(n.x).toFixed(2)}${uL}, ${+Units.len(n.y).toFixed(2)}${uL})</span></td>
+            <td class="py-1.5 px-2 text-center"><span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold text-[10px]">${n.support.toUpperCase()}</span></td>
+            <td class="py-1.5 px-2 text-right font-mono">${Units.force(n.rx || 0).toFixed(3)}</td>
+            <td class="py-1.5 px-2 text-right font-mono font-bold text-emerald-600">${Units.force(n.ry || 0).toFixed(3)}</td>
+            <td class="py-1.5 px-3 text-right font-mono text-indigo-600">${Units.mom(n.rmz || 0).toFixed(3)}</td>
+          </tr>
         `).join('')}
       </tbody>
+      <tfoot class="bg-slate-50 border-t-2 border-slate-300 text-slate-800 font-bold">
+        <tr>
+          <td colspan="2" class="py-1.5 px-3 text-slate-700 font-semibold">ผลรวมแรงปฏิกิริยาทั้งหมด (Total Equilibrium ΣR):</td>
+          <td class="py-1.5 px-2 text-right font-mono text-slate-700">ΣRx = ${Units.force(sumRx).toFixed(2)}</td>
+          <td class="py-1.5 px-2 text-right font-mono text-emerald-700">ΣRy = ${Units.force(sumRy).toFixed(2)}</td>
+          <td class="py-1.5 px-3 text-right font-mono text-indigo-700">ΣMz = ${Units.mom(sumMz).toFixed(2)}</td>
+        </tr>
+      </tfoot>
     `;
   }
 
+  // 2. Member Internal Forces Schedule
   const rep2DMem = document.getElementById('rep2DMembersTable');
   if (rep2DMem) {
     rep2DMem.innerHTML = `
-      <thead><tr><th>${isTH ? 'ชิ้นส่วน (Member)' : 'Member'}</th><th>${isTH ? 'จุดต่อ (Nodes)' : 'Nodes'}</th><th>${isTH ? 'ชนิด' : 'Type'}</th><th>${isTH ? 'ความยาว' : 'Length'} (${uL})</th><th>${isTH ? 'แรงตามแนวแกน N' : 'Axial N'} (${uF})</th><th>Max |V| (${uF})</th><th>Max |M| (${uM})</th></tr></thead>
+      <thead>
+        <tr class="bg-slate-100 text-slate-700">
+          <th class="py-1.5 px-2.5 font-bold border-b border-slate-300 text-left">${isTH ? 'ชิ้นส่วน' : 'Member'}</th>
+          <th class="py-1.5 px-2 font-bold border-b border-slate-300 text-center">${isTH ? 'จุดต่อ' : 'Nodes'}</th>
+          <th class="py-1.5 px-2 font-bold border-b border-slate-300 text-center">${isTH ? 'ชนิด' : 'Type'}</th>
+          <th class="py-1.5 px-2 font-bold border-b border-slate-300 text-right">${isTH ? 'ความยาว' : 'Length'} (${uL})</th>
+          <th class="py-1.5 px-2.5 font-bold border-b border-slate-300 text-right">${isTH ? 'แรงตามแนวแกน N' : 'Axial N'} (${uF})</th>
+          <th class="py-1.5 px-2.5 font-bold border-b border-slate-300 text-right">Max |V| (${uF})</th>
+          <th class="py-1.5 px-2.5 font-bold border-b border-slate-300 text-right">Max |M| (${uM})</th>
+        </tr>
+      </thead>
       <tbody>
-        ${frame2D.members.map(m => `
-          <tr><td>M${m.id}</td><td>N${m.n1} → N${m.n2}</td><td>${m.type}</td><td>${Units.len(m.length || 0).toFixed(3)}</td><td>${Units.force(m.N || 0).toFixed(2)}</td><td>${Units.force(m.maxAbsV || 0).toFixed(2)}</td><td>${Units.mom(m.maxAbsM || 0).toFixed(2)}</td></tr>
-        `).join('')}
+        ${frame2D.members.map(m => {
+          const isTen = (m.N || 0) >= 0;
+          const nBadge = Math.abs(m.N || 0) > 0.01 
+            ? `<span class="ml-1 text-[9px] px-1 py-0.2 rounded font-bold ${isTen ? 'bg-sky-100 text-sky-800' : 'bg-emerald-100 text-emerald-800'}">${isTen ? 'T' : 'C'}</span>` 
+            : '';
+          return `
+            <tr class="border-b border-slate-200/70 hover:bg-slate-50">
+              <td class="py-1 px-2.5 font-mono font-bold text-slate-900">Member M${m.id}</td>
+              <td class="py-1 px-2 text-center font-mono text-slate-600">N${m.n1} → N${m.n2}</td>
+              <td class="py-1 px-2 text-center"><span class="px-1.5 py-0.5 rounded text-[10px] font-semibold ${m.type === 'column' ? 'bg-indigo-50 text-indigo-700' : m.type === 'brace' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-700'}">${m.type.toUpperCase()}</span></td>
+              <td class="py-1 px-2 text-right font-mono">${Units.len(m.length || 0).toFixed(3)}</td>
+              <td class="py-1 px-2.5 text-right font-mono font-semibold ${isTen ? 'text-sky-700' : 'text-emerald-700'}">${Units.force(m.N || 0).toFixed(2)}${nBadge}</td>
+              <td class="py-1 px-2.5 text-right font-mono font-semibold text-rose-600">${Units.force(m.maxAbsV || 0).toFixed(2)}</td>
+              <td class="py-1 px-2.5 text-right font-mono font-bold text-indigo-700">${Units.mom(m.maxAbsM || 0).toFixed(2)}</td>
+            </tr>
+          `;
+        }).join('')}
       </tbody>
     `;
   }
 
+  // 3. Nodal Coordinates & Displacements Schedule
   const rep2DNodes = document.getElementById('rep2DNodesTable');
   if (rep2DNodes) {
     rep2DNodes.innerHTML = `
-      <thead><tr><th>${isTH ? 'จุดต่อ (Node)' : 'Node'}</th><th>X (${uL})</th><th>Y (${uL})</th><th>${isTH ? 'แรงกระทำ Fx' : 'Applied Fx'} (${uF})</th><th>${isTH ? 'แรงกระทำ Fy' : 'Applied Fy'} (${uF})</th><th>ux (${uD})</th><th>uy (${uD})</th></tr></thead>
+      <thead>
+        <tr class="bg-slate-100 text-slate-700">
+          <th class="py-1.5 px-3 font-bold border-b border-slate-300 text-left">${isTH ? 'จุดต่อ (Node)' : 'Node'}</th>
+          <th class="py-1.5 px-2 font-bold border-b border-slate-300 text-right">X (${uL})</th>
+          <th class="py-1.5 px-2 font-bold border-b border-slate-300 text-right">Y (${uL})</th>
+          <th class="py-1.5 px-2.5 font-bold border-b border-slate-300 text-right">${isTH ? 'แรงภายนอก Fx' : 'Fx'} (${uF})</th>
+          <th class="py-1.5 px-2.5 font-bold border-b border-slate-300 text-right">${isTH ? 'แรงภายนอก Fy' : 'Fy'} (${uF})</th>
+          <th class="py-1.5 px-2.5 font-bold border-b border-slate-300 text-right">ux (${uD})</th>
+          <th class="py-1.5 px-2.5 font-bold border-b border-slate-300 text-right">uy (${uD})</th>
+        </tr>
+      </thead>
       <tbody>
         ${frame2D.nodes.map(n => `
-          <tr><td>N${n.id}</td><td>${Units.len(n.x).toFixed(2)}</td><td>${Units.len(n.y).toFixed(2)}</td><td>${Units.force(n.fx || 0).toFixed(2)}</td><td>${Units.force(n.fy || 0).toFixed(2)}</td><td>${Units.defl((n.ux || 0) * 1000).toFixed(3)}</td><td>${Units.defl((n.uy || 0) * 1000).toFixed(3)}</td></tr>
+          <tr class="border-b border-slate-200/70 hover:bg-slate-50">
+            <td class="py-1 px-3 font-mono font-bold text-slate-900">Node N${n.id}</td>
+            <td class="py-1 px-2 text-right font-mono">${Units.len(n.x).toFixed(2)}</td>
+            <td class="py-1 px-2 text-right font-mono">${Units.len(n.y).toFixed(2)}</td>
+            <td class="py-1 px-2.5 text-right font-mono ${Math.abs(n.fx || 0) > 0.01 ? 'font-bold text-rose-600' : 'text-slate-400'}">${Units.force(n.fx || 0).toFixed(2)}</td>
+            <td class="py-1 px-2.5 text-right font-mono ${Math.abs(n.fy || 0) > 0.01 ? 'font-bold text-rose-600' : 'text-slate-400'}">${Units.force(n.fy || 0).toFixed(2)}</td>
+            <td class="py-1 px-2.5 text-right font-mono text-teal-700">${Units.defl((n.ux || 0) * 1000).toFixed(3)}</td>
+            <td class="py-1 px-2.5 text-right font-mono text-teal-700 font-semibold">${Units.defl((n.uy || 0) * 1000).toFixed(3)}</td>
+          </tr>
         `).join('')}
       </tbody>
     `;

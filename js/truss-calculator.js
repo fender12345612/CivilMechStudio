@@ -1324,6 +1324,8 @@ let truss3DCam = {
 function setTruss3DCameraPreset(preset) {
   if (preset === 'iso') {
     truss3DCam.yaw = -0.65; truss3DCam.pitch = 0.34; truss3DCam.zoom = 1.0; truss3DCam.panX = 0; truss3DCam.panY = 15;
+  } else if (preset === 'iso2') {
+    truss3DCam.yaw = 0.65; truss3DCam.pitch = 0.34; truss3DCam.zoom = 1.0; truss3DCam.panX = 0; truss3DCam.panY = 15;
   } else if (preset === 'front') {
     truss3DCam.yaw = 0.0; truss3DCam.pitch = 0.08; truss3DCam.zoom = 1.15; truss3DCam.panX = 0; truss3DCam.panY = 20;
   } else if (preset === 'side') {
@@ -1332,6 +1334,14 @@ function setTruss3DCameraPreset(preset) {
     truss3DCam.yaw = 0.0; truss3DCam.pitch = 1.42; truss3DCam.zoom = 0.95; truss3DCam.panX = 0; truss3DCam.panY = 0;
   } else if (preset === 'fit') {
     truss3DCam.zoom = 1.0; truss3DCam.panX = 0; truss3DCam.panY = 15;
+  }
+  if (typeof trussReport3DView !== 'undefined' && trussReport3DView.mode === 'sync') {
+    trussReport3DView.yaw = truss3DCam.yaw;
+    trussReport3DView.pitch = truss3DCam.pitch;
+    trussReport3DView.zoom = truss3DCam.zoom;
+    trussReport3DView.panX = truss3DCam.panX;
+    trussReport3DView.panY = truss3DCam.panY;
+    if (typeof drawReportTruss3DCanvas === 'function') drawReportTruss3DCanvas('repTruss3DCanvas');
   }
   renderTruss3DViewerTab();
 }
@@ -2119,7 +2129,7 @@ function openTrussReportPDF(autoPrint = false) {
   } else if (typeof showNotification === 'function') {
     showNotification(
       'เปิดหน้ารายงาน PDF โครงหลังคา 2D & 3D (แยกอิสระ)',
-      'แสดงเฉพาะรายงานโครงหลังคาเหล็ก 2D & 3D (แผ่นที่ 1–2) พร้อมกดปุ่มพิมพ์ PDF เฉพาะหมวดหมู่นี้ได้ทันที'
+      'แสดงเฉพาะรายงานโครงหลังคาเหล็ก 2D & 3D (แผ่นที่ 1–3) พร้อมกดปุ่มพิมพ์ PDF เฉพาะหมวดหมู่นี้ได้ทันที'
     );
   }
 }
@@ -2290,9 +2300,200 @@ function drawReportTruss2DCanvas(canvasId) {
   ctx.fillText(`ช่วงพาดโครงถัก L = ${L.toFixed(2)} m (${n} ช่อง × ${(L / n).toFixed(2)} m) • ความสูงยอดจั่ว H = ${trussState.ridgeHeight.toFixed(2)} m • มุมลาด θ = ${s.avgSlopeDeg.toFixed(1)}°`, (lx + rx) / 2, dimY - 5);
 }
 
+let trussReport3DView = {
+  mode: 'iso', // 'iso', 'iso2', 'front', 'side', 'top', 'sync', 'custom'
+  yaw: -0.65,
+  pitch: 0.34,
+  zoom: 1.0,
+  panX: 0,
+  panY: 0
+};
+
+function setReportTruss3DAngle(preset) {
+  trussReport3DView.mode = preset;
+  if (preset === 'iso') {
+    trussReport3DView.yaw = -0.65;
+    trussReport3DView.pitch = 0.34;
+    trussReport3DView.zoom = 1.0;
+    trussReport3DView.panX = 0;
+    trussReport3DView.panY = 0;
+  } else if (preset === 'iso2') {
+    trussReport3DView.yaw = 0.65;
+    trussReport3DView.pitch = 0.34;
+    trussReport3DView.zoom = 1.0;
+    trussReport3DView.panX = 0;
+    trussReport3DView.panY = 0;
+  } else if (preset === 'front') {
+    trussReport3DView.yaw = 0.0;
+    trussReport3DView.pitch = 0.06;
+    trussReport3DView.zoom = 1.15;
+    trussReport3DView.panX = 0;
+    trussReport3DView.panY = 15;
+  } else if (preset === 'side') {
+    trussReport3DView.yaw = -Math.PI / 2;
+    trussReport3DView.pitch = 0.06;
+    trussReport3DView.zoom = 1.05;
+    trussReport3DView.panX = 0;
+    trussReport3DView.panY = 15;
+  } else if (preset === 'top') {
+    trussReport3DView.yaw = 0.0;
+    trussReport3DView.pitch = 1.42;
+    trussReport3DView.zoom = 0.95;
+    trussReport3DView.panX = 0;
+    trussReport3DView.panY = 0;
+  } else if (preset === 'sync') {
+    trussReport3DView.yaw = truss3DCam.yaw;
+    trussReport3DView.pitch = truss3DCam.pitch;
+    trussReport3DView.zoom = truss3DCam.zoom;
+    trussReport3DView.panX = truss3DCam.panX;
+    trussReport3DView.panY = truss3DCam.panY;
+  } else if (preset === 'reset') {
+    trussReport3DView.mode = 'iso';
+    trussReport3DView.yaw = -0.65;
+    trussReport3DView.pitch = 0.34;
+    trussReport3DView.zoom = 1.0;
+    trussReport3DView.panX = 0;
+    trussReport3DView.panY = 0;
+  }
+  updateReport3DToolbarUI();
+  drawReportTruss3DCanvas('repTruss3DCanvas');
+}
+
+function updateReport3DToolbarUI() {
+  const badge = document.getElementById('repTruss3DAngleBadge');
+  const subBadge = document.getElementById('repTruss3DSubBadge');
+  const isTH = (typeof currentLang === 'undefined' || currentLang === 'th');
+
+  const names = {
+    'iso': isTH ? 'ไอโซเมตริกหลัก (SW)' : 'Isometric (SW)',
+    'iso2': isTH ? 'ไอโซเมตริกตรงข้าม (SE)' : 'Isometric (SE)',
+    'front': isTH ? 'ด้านหน้าอาคาร (Front)' : 'Front Elevation',
+    'side': isTH ? 'ด้านข้างอาคาร (Side)' : 'Side Elevation',
+    'top': isTH ? 'ด้านบนผังหลังคา (Top)' : 'Top / Roof Plan',
+    'sync': isTH ? 'มุมจาก 3D Viewer' : 'Synced from 3D',
+    'custom': isTH ? 'หมุนอิสระ (Custom Angle)' : 'Custom Angle'
+  };
+
+  const name = names[trussReport3DView.mode] || names['custom'];
+  if (badge) badge.innerText = name;
+  if (subBadge) subBadge.innerText = `3D Model (${name})`;
+
+  document.querySelectorAll('.rep-t3d-btn').forEach(btn => {
+    const p = btn.getAttribute('data-preset');
+    if (p === trussReport3DView.mode) {
+      btn.className = 'rep-t3d-btn px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-bold text-[11px] shadow-xs transition';
+    } else {
+      btn.className = 'rep-t3d-btn px-2.5 py-1 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-semibold text-[11px] transition';
+    }
+  });
+}
+
+function initReportTruss3DCanvasInteraction() {
+  const canvas = document.getElementById('repTruss3DCanvas');
+  if (!canvas || canvas.dataset.bound === 'true') return;
+  canvas.dataset.bound = 'true';
+
+  let isDrag = false, lastX = 0, lastY = 0, mode = 'orbit';
+
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
+  canvas.addEventListener('mousedown', e => {
+    isDrag = true;
+    mode = (e.button === 2 || e.shiftKey) ? 'pan' : 'orbit';
+    lastX = e.clientX;
+    lastY = e.clientY;
+  });
+
+  window.addEventListener('mousemove', e => {
+    if (!isDrag) return;
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+    lastX = e.clientX;
+    lastY = e.clientY;
+
+    if (mode === 'orbit') {
+      trussReport3DView.yaw += dx * 0.008;
+      trussReport3DView.pitch = Math.max(-0.25, Math.min(1.48, trussReport3DView.pitch + dy * 0.008));
+    } else {
+      trussReport3DView.panX += dx;
+      trussReport3DView.panY += dy;
+    }
+    trussReport3DView.mode = 'custom';
+    updateReport3DToolbarUI();
+    drawReportTruss3DCanvas('repTruss3DCanvas');
+  });
+
+  window.addEventListener('mouseup', () => {
+    isDrag = false;
+  });
+
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.08 : 0.92;
+    trussReport3DView.zoom = Math.max(0.4, Math.min(3.0, (trussReport3DView.zoom || 1.0) * factor));
+    trussReport3DView.mode = 'custom';
+    updateReport3DToolbarUI();
+    drawReportTruss3DCanvas('repTruss3DCanvas');
+  }, { passive: false });
+
+  let tLastDist = 0, tLastX = 0, tLastY = 0;
+  canvas.addEventListener('touchstart', e => {
+    if (e.touches.length === 1) {
+      isDrag = true;
+      mode = 'orbit';
+      lastX = e.touches[0].clientX;
+      lastY = e.touches[0].clientY;
+    } else if (e.touches.length === 2) {
+      e.preventDefault();
+      isDrag = true;
+      mode = 'pan';
+      tLastDist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
+      tLastX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      tLastY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchmove', e => {
+    if (!isDrag) return;
+    if (e.touches.length === 1 && mode === 'orbit') {
+      e.preventDefault();
+      const dx = e.touches[0].clientX - lastX;
+      const dy = e.touches[0].clientY - lastY;
+      lastX = e.touches[0].clientX;
+      lastY = e.touches[0].clientY;
+      trussReport3DView.yaw += dx * 0.009;
+      trussReport3DView.pitch = Math.max(-0.25, Math.min(1.48, trussReport3DView.pitch + dy * 0.009));
+      trussReport3DView.mode = 'custom';
+      updateReport3DToolbarUI();
+      drawReportTruss3DCanvas('repTruss3DCanvas');
+    } else if (e.touches.length === 2) {
+      e.preventDefault();
+      const dist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
+      const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      if (tLastDist > 10) {
+        const factor = dist / tLastDist;
+        trussReport3DView.zoom = Math.max(0.4, Math.min(3.0, (trussReport3DView.zoom || 1.0) * factor));
+      }
+      trussReport3DView.panX += (midX - tLastX);
+      trussReport3DView.panY += (midY - tLastY);
+      tLastDist = dist;
+      tLastX = midX;
+      tLastY = midY;
+      trussReport3DView.mode = 'custom';
+      updateReport3DToolbarUI();
+      drawReportTruss3DCanvas('repTruss3DCanvas');
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', () => {
+    isDrag = false;
+  });
+}
+
 function drawReportTruss3DCanvas(canvasId) {
   const c = document.getElementById(canvasId);
   if (!c || !trussSolution) return;
+  initReportTruss3DCanvasInteraction();
   const ctx = c.getContext('2d');
   const W = c.width, H = c.height;
   const s = trussSolution;
@@ -2315,11 +2516,15 @@ function drawReportTruss3DCanvas(canvasId) {
   const centerY = colH + trussState.ridgeHeight / 2;
   const centerZ = Lb / 2;
 
-  const yaw = -0.62;
-  const pitch = 0.33;
+  const yaw = trussReport3DView.yaw;
+  const pitch = trussReport3DView.pitch;
+  const zoom = trussReport3DView.zoom || 1.0;
+  const panX = trussReport3DView.panX || 0;
+  const panY = trussReport3DView.panY || 0;
+
   const cy = Math.cos(yaw), sy = Math.sin(yaw);
   const cp = Math.cos(pitch), sp = Math.sin(pitch);
-  const baseScale = Math.min(W, H) / Math.max(L * 1.15, Lb * 0.85, 14) * 1.16;
+  const baseScale = (Math.min(W, H) / Math.max(L * 1.15, Lb * 0.85, 14)) * 1.16 * zoom;
 
   function project3D(x, y, z) {
     const rx = x - centerX;
@@ -2334,8 +2539,8 @@ function drawReportTruss3DCanvas(canvasId) {
     const fov = 55;
     const persp = fov / Math.max(12, fov + z2 * 0.45);
     return {
-      px: W / 2 + x1 * baseScale * persp,
-      py: H / 2 + 18 - y2 * baseScale * persp,
+      px: W / 2 + panX + x1 * baseScale * persp,
+      py: H / 2 + 18 + panY - y2 * baseScale * persp,
       depth: z2
     };
   }
@@ -2476,20 +2681,58 @@ function drawReportTrussDiagramsCanvas(canvasId) {
 
   // LEFT HALF: Global Shear Force Diagram (SFD)
   {
-    const padL = 70, padR = 40, padT = 42, padB = 45;
+    const padL = 70, padR = 40, padT = 44, padB = 46;
     const plotW = halfW - padL - padR;
     const plotH = H - padT - padB;
     const midY = padT + plotH / 2;
     const maxV = Math.max(s.maxGlobalV, 1);
 
-    ctx.strokeStyle = '#cbd5e1';
+    // Subtle container outline
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 1;
     ctx.strokeRect(padL, padT, plotW, plotH);
 
-    ctx.strokeStyle = '#64748b';
-    ctx.setLineDash([4, 4]);
+    // Solid dark datum baseline
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 1.8;
     ctx.beginPath(); ctx.moveTo(padL, midY); ctx.lineTo(padL + plotW, midY); ctx.stroke();
-    ctx.setLineDash([]);
 
+    // Dual gradient fill: Teal for positive, Rose for negative
+    const gradVPos = ctx.createLinearGradient(0, midY, 0, padT);
+    gradVPos.addColorStop(0, 'rgba(13, 148, 136, 0.06)');
+    gradVPos.addColorStop(1, 'rgba(13, 148, 136, 0.32)');
+
+    const gradVNeg = ctx.createLinearGradient(0, midY, 0, padT + plotH);
+    gradVNeg.addColorStop(0, 'rgba(225, 29, 72, 0.06)');
+    gradVNeg.addColorStop(1, 'rgba(225, 29, 72, 0.32)');
+
+    // Draw positive shear area
+    ctx.beginPath();
+    ctx.moveTo(padL, midY);
+    s.samples.forEach(pt => {
+      const x = padL + (pt.x / L) * plotW;
+      const y = midY - (Math.max(0, pt.V) / maxV) * (plotH * 0.42);
+      ctx.lineTo(x, y);
+    });
+    ctx.lineTo(padL + plotW, midY);
+    ctx.closePath();
+    ctx.fillStyle = gradVPos;
+    ctx.fill();
+
+    // Draw negative shear area
+    ctx.beginPath();
+    ctx.moveTo(padL, midY);
+    s.samples.forEach(pt => {
+      const x = padL + (pt.x / L) * plotW;
+      const y = midY - (Math.min(0, pt.V) / maxV) * (plotH * 0.42);
+      ctx.lineTo(x, y);
+    });
+    ctx.lineTo(padL + plotW, midY);
+    ctx.closePath();
+    ctx.fillStyle = gradVNeg;
+    ctx.fill();
+
+    // Main SFD stroke line
     ctx.beginPath();
     ctx.moveTo(padL, midY);
     s.samples.forEach(pt => {
@@ -2498,64 +2741,85 @@ function drawReportTrussDiagramsCanvas(canvasId) {
       ctx.lineTo(x, y);
     });
     ctx.lineTo(padL + plotW, midY);
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(225, 29, 72, 0.16)';
-    ctx.fill();
-    ctx.strokeStyle = '#e11d48';
-    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#0d9488';
+    ctx.lineWidth = 2.2;
     ctx.stroke();
 
+    // Header badge
     ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 13px Inter, Sarabun, sans-serif';
+    ctx.font = 'bold 12px Inter, Sarabun, sans-serif';
     ctx.textAlign = 'left';
     ctx.fillText(`แผนภาพแรงเฉือนรวม V(x) — Max |V| = ${s.maxGlobalV.toFixed(0)} kg`, padL, 26);
 
-    ctx.fillStyle = '#be123c';
+    // Callout extrema
+    ctx.fillStyle = '#0f766e';
     ctx.font = 'bold 11px JetBrains Mono, monospace';
     ctx.fillText(`+${s.gravRes.RA.toFixed(0)} kg`, padL + 6, padT + 18);
     ctx.textAlign = 'right';
+    ctx.fillStyle = '#be123c';
     ctx.fillText(`-${s.gravRes.RB.toFixed(0)} kg`, padL + plotW - 6, padT + plotH - 8);
   }
 
   // RIGHT HALF: Global Bending Moment Diagram (BMD)
   {
     const offsetX = halfW;
-    const padL = 60, padR = 50, padT = 42, padB = 45;
+    const padL = 60, padR = 50, padT = 44, padB = 46;
     const plotW = halfW - padL - padR;
     const plotH = H - padT - padB;
-    const baseY = padT + 25;
+    const baseY = padT + 22;
     const maxM = Math.max(s.maxGlobalM, 1);
 
-    ctx.strokeStyle = '#cbd5e1';
+    // Subtle container outline
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 1;
     ctx.strokeRect(offsetX + padL, padT, plotW, plotH);
 
-    ctx.strokeStyle = '#64748b';
-    ctx.setLineDash([4, 4]);
+    // Solid dark datum baseline
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 1.8;
     ctx.beginPath(); ctx.moveTo(offsetX + padL, baseY); ctx.lineTo(offsetX + padL + plotW, baseY); ctx.stroke();
-    ctx.setLineDash([]);
+
+    // Indigo Gradient fill
+    const gradM = ctx.createLinearGradient(0, baseY, 0, padT + plotH);
+    gradM.addColorStop(0, 'rgba(79, 70, 229, 0.05)');
+    gradM.addColorStop(1, 'rgba(79, 70, 229, 0.32)');
 
     ctx.beginPath();
     ctx.moveTo(offsetX + padL, baseY);
     s.samples.forEach(pt => {
       const x = offsetX + padL + (pt.x / L) * plotW;
-      const y = baseY + (pt.M / maxM) * (plotH - 45);
+      const y = baseY + (pt.M / maxM) * (plotH - 42);
       ctx.lineTo(x, y);
     });
     ctx.lineTo(offsetX + padL + plotW, baseY);
     ctx.closePath();
-    ctx.fillStyle = 'rgba(2, 132, 199, 0.16)';
+    ctx.fillStyle = gradM;
     ctx.fill();
-    ctx.strokeStyle = '#0284c7';
-    ctx.lineWidth = 2.5;
+
+    ctx.strokeStyle = '#4f46e5';
+    ctx.lineWidth = 2.4;
+    ctx.stroke();
+
+    // Bullseye marker at peak moment
+    const midPt = s.samples[Math.floor(s.samples.length / 2)] || { x: L / 2, M: s.maxGlobalM };
+    const peakX = offsetX + padL + (midPt.x / L) * plotW;
+    const peakY = baseY + (midPt.M / maxM) * (plotH - 42);
+
+    ctx.beginPath();
+    ctx.arc(peakX, peakY, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#4f46e5';
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
     ctx.stroke();
 
     const fChord = s.maxGlobalM / Math.max(0.4, trussState.ridgeHeight);
     ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 13px Inter, Sarabun, sans-serif';
+    ctx.font = 'bold 12px Inter, Sarabun, sans-serif';
     ctx.textAlign = 'left';
     ctx.fillText(`แผนภาพโมเมนต์ดัดรวม M(x) — M_max = ${s.maxGlobalM.toFixed(0)} kg·m`, offsetX + padL, 26);
 
-    ctx.fillStyle = '#0369a1';
+    ctx.fillStyle = '#4338ca';
     ctx.font = 'bold 11px JetBrains Mono, monospace';
     ctx.textAlign = 'center';
     ctx.fillText(`M_max = ${s.maxGlobalM.toFixed(0)} kg·m (${(s.maxGlobalM / 1000).toFixed(2)} ton·m) • แรงคอร์ดโดยประมาณ M/h ≈ ${fChord.toFixed(0)} kg`, offsetX + padL + plotW / 2, padT + plotH + 24);
@@ -2571,10 +2835,28 @@ function populateTrussCalculationReport() {
   const modelTitle = presetObj ? presetObj.title : `Roof Truss L=${trussState.span}m (${trussState.diagPattern.toUpperCase()})`;
   const allPass = s.passCount === s.members.length;
 
+  const purlinSec = getTrussSec(trussState.secPurlin);
+  const totalPurlinKg = (trussState.panels + 1) * trussState.bldgLength * purlinSec.kg;
+  const totalSteelKg = s.trussSteelWeightKg * trussState.numTrusses + totalPurlinKg;
+
   const setTxt = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
   setTxt('repTrussModelTitle', modelTitle);
   setTxt('repTrussMethodSteel', `${trussState.designMethod} • ${trussState.steelGrade} (Fy = ${trussState.Fy.toLocaleString()} ksc)`);
   setTxt('repTrussDimSummary', `Span L = ${trussState.span.toFixed(1)} m × ยาว ${trussState.bldgLength.toFixed(1)} m (${trussState.numTrusses} โครง @ ${trussState.baySpacing} m)`);
+
+  // Populate Roof Truss Executive KPI Ribbon
+  setTxt('repTrussKpiSpan', `${trussState.span.toFixed(1)}m × ${trussState.baySpacing.toFixed(1)}m`);
+  setTxt('repTrussKpiLoad', `${s.qGravity_m2.toFixed(1)} kg/m²`);
+  setTxt('repTrussKpiSteel', `${(totalSteelKg / 1000).toFixed(2)} ตัน`);
+  setTxt('repTrussKpiDefl', `${s.gravRes.maxDeflMm.toFixed(2)} mm`);
+
+  // Echo to Sheet 2
+  document.querySelectorAll('.repTrussModelTitleEcho').forEach(el => el.innerText = modelTitle);
+  document.querySelectorAll('.repTrussMethodSteelEcho').forEach(el => el.innerText = `${trussState.designMethod} • ${trussState.steelGrade}`);
+  document.querySelectorAll('.repTrussStatusBadgeEcho').forEach(el => {
+    el.className = allPass ? 'repTrussStatusBadgeEcho font-bold text-emerald-700' : 'repTrussStatusBadgeEcho font-bold text-rose-600';
+    el.innerText = allPass ? `PASS (OK)` : `FAIL (NG)`;
+  });
 
   const statusEl = document.getElementById('repTrussStatusBadge');
   if (statusEl) {
@@ -2587,49 +2869,45 @@ function populateTrussCalculationReport() {
   // 1. Parameters Table
   const paramsTable = document.getElementById('repTrussParamsTable');
   if (paramsTable) {
-    const purlinSec = getTrussSec(trussState.secPurlin);
-    const totalPurlinKg = (trussState.panels + 1) * trussState.bldgLength * purlinSec.kg;
-    const totalSteelKg = s.trussSteelWeightKg * trussState.numTrusses + totalPurlinKg;
-
     paramsTable.innerHTML = `
       <thead>
-        <tr>
-          <th>พารามิเตอร์เรขาคณิต</th>
-          <th>ค่าที่ใช้</th>
-          <th>พารามิเตอร์น้ำหนักบรรทุก & ผลลัพธ์</th>
-          <th>ค่าที่คำนวณได้</th>
+        <tr class="bg-slate-100 text-slate-700">
+          <th class="py-1.5 px-3 font-bold border-b border-slate-300 text-left">พารามิเตอร์เรขาคณิต</th>
+          <th class="py-1.5 px-2 font-bold border-b border-slate-300 text-left">ค่าที่ใช้</th>
+          <th class="py-1.5 px-3 font-bold border-b border-slate-300 text-left">พารามิเตอร์น้ำหนักบรรทุก & ผลลัพธ์</th>
+          <th class="py-1.5 px-2 font-bold border-b border-slate-300 text-left">ค่าที่คำนวณได้</th>
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td>ช่วงพาดโครงถัก (Span L) / จำนวนช่อง</td>
-          <td><strong>${trussState.span.toFixed(2)} m</strong> (${trussState.panels} ช่อง)</td>
-          <td>น้ำหนักคงที่ (DL) / น้ำหนักจรหลังคา (LL)</td>
-          <td><strong>${trussState.dlRoof.toFixed(1)} / ${trussState.llRoof.toFixed(1)} kg/m²</strong></td>
+        <tr class="border-b border-slate-200/70 hover:bg-slate-50">
+          <td class="py-1.5 px-3">ช่วงพาดโครงถัก (Span L) / จำนวนช่อง</td>
+          <td class="py-1.5 px-2 font-mono"><strong>${trussState.span.toFixed(2)} m</strong> (${trussState.panels} ช่อง)</td>
+          <td class="py-1.5 px-3">น้ำหนักคงที่ (DL) / น้ำหนักจรหลังคา (LL)</td>
+          <td class="py-1.5 px-2 font-mono"><strong>${trussState.dlRoof.toFixed(1)} / ${trussState.llRoof.toFixed(1)} kg/m²</strong></td>
         </tr>
-        <tr>
-          <td>ความสูงยอดจั่ว (H_ridge) / ชายคา (H_eave)</td>
-          <td><strong>${trussState.ridgeHeight.toFixed(2)} m / ${trussState.eaveHeight.toFixed(2)} m</strong> (θ = ${s.avgSlopeDeg.toFixed(1)}°)</td>
-          <td>น้ำหนักแผงโซลาร์เซลล์ (Solar Roof)</td>
-          <td><strong>${trussState.hasSolar ? `${s.solarTotal.toFixed(1)} kg/m²` : 'ไม่มี (0 kg/m²)'}</strong></td>
+        <tr class="border-b border-slate-200/70 hover:bg-slate-50">
+          <td class="py-1.5 px-3">ความสูงยอดจั่ว (H_ridge) / ชายคา (H_eave)</td>
+          <td class="py-1.5 px-2 font-mono"><strong>${trussState.ridgeHeight.toFixed(2)} m / ${trussState.eaveHeight.toFixed(2)} m</strong> (θ = ${s.avgSlopeDeg.toFixed(1)}°)</td>
+          <td class="py-1.5 px-3">น้ำหนักแผงโซลาร์เซลล์ (Solar Roof)</td>
+          <td class="py-1.5 px-2 font-mono"><strong>${trussState.hasSolar ? `${s.solarTotal.toFixed(1)} kg/m²` : 'ไม่มี (0 kg/m²)'}</strong></td>
         </tr>
-        <tr>
-          <td>ระยะห่างโครงถัก (s) × จำนวนโครง (N)</td>
-          <td><strong>${trussState.baySpacing.toFixed(2)} m × ${trussState.numTrusses} โครง</strong> (ยาว ${trussState.bldgLength.toFixed(1)} m)</td>
-          <td>น้ำหนักรวมออกแบบ (q_design) / แรงกระจาย (w)</td>
-          <td><strong>${s.qGravity_m2.toFixed(1)} kg/m² (${s.wGravity.toFixed(1)} kg/m)</strong></td>
+        <tr class="border-b border-slate-200/70 hover:bg-slate-50">
+          <td class="py-1.5 px-3">ระยะห่างโครงถัก (s) × จำนวนโครง (N)</td>
+          <td class="py-1.5 px-2 font-mono"><strong>${trussState.baySpacing.toFixed(2)} m × ${trussState.numTrusses} โครง</strong> (ยาว ${trussState.bldgLength.toFixed(1)} m)</td>
+          <td class="py-1.5 px-3">น้ำหนักรวมออกแบบ (q_design) / แรงกระจาย (w)</td>
+          <td class="py-1.5 px-2 font-mono text-indigo-700"><strong>${s.qGravity_m2.toFixed(1)} kg/m² (${s.wGravity.toFixed(1)} kg/m)</strong></td>
         </tr>
-        <tr>
-          <td>เสารับโครงหลังคา / เสากลาง (แกน B)</td>
-          <td><strong>${trussState.hasColumns ? `สูง ${trussState.colHeight.toFixed(1)} m (${trussState.secCol})` : 'ไม่คิดเสา'} • ${trussState.hasCenterCol ? 'มีเสากลาง' : 'ช่วงเดี่ยว'}</strong></td>
-          <td>แรงปฏิกิริยาที่จุดรองรับ (RA / RB${trussState.hasCenterCol ? ' / RM' : ''})</td>
-          <td><strong>RA = ${s.gravRes.RA.toFixed(0)} kg, RB = ${s.gravRes.RB.toFixed(0)} kg${trussState.hasCenterCol ? `, RM = ${s.gravRes.RM.toFixed(0)} kg` : ''}</strong></td>
+        <tr class="border-b border-slate-200/70 hover:bg-slate-50">
+          <td class="py-1.5 px-3">เสารับโครงหลังคา / เสากลาง (แกน B)</td>
+          <td class="py-1.5 px-2 font-mono"><strong>${trussState.hasColumns ? `สูง ${trussState.colHeight.toFixed(1)} m (${trussState.secCol})` : 'ไม่คิดเสา'} • ${trussState.hasCenterCol ? 'มีเสากลาง' : 'ช่วงเดี่ยว'}</strong></td>
+          <td class="py-1.5 px-3">แรงปฏิกิริยาที่จุดรองรับ (RA / RB${trussState.hasCenterCol ? ' / RM' : ''})</td>
+          <td class="py-1.5 px-2 font-mono text-emerald-700"><strong>RA = ${s.gravRes.RA.toFixed(0)} kg, RB = ${s.gravRes.RB.toFixed(0)} kg${trussState.hasCenterCol ? `, RM = ${s.gravRes.RM.toFixed(0)} kg` : ''}</strong></td>
         </tr>
-        <tr>
-          <td>น้ำหนักเหล็กโครงถัก 1 โครง / รวมทั้งอาคาร</td>
-          <td><strong>${s.trussSteelWeightKg.toFixed(1)} kg/โครง • รวม ${(totalSteelKg / 1000).toFixed(2)} ตัน</strong></td>
-          <td>การแอ่นตัวสูงสุด (δ_max) / อัตราส่วนกำลังสูงสุด</td>
-          <td><strong>δ = ${s.gravRes.maxDeflMm.toFixed(2)} mm • Max Ratio = ${s.maxRatio.toFixed(2)} (${allPass ? 'PASS' : 'FAIL'})</strong></td>
+        <tr class="hover:bg-slate-50">
+          <td class="py-1.5 px-3">น้ำหนักเหล็กโครงถัก 1 โครง / รวมทั้งอาคาร</td>
+          <td class="py-1.5 px-2 font-mono"><strong>${s.trussSteelWeightKg.toFixed(1)} kg/โครง • รวม ${(totalSteelKg / 1000).toFixed(2)} ตัน</strong></td>
+          <td class="py-1.5 px-3">การแอ่นตัวสูงสุด (δ_max) / อัตราส่วนกำลังสูงสุด</td>
+          <td class="py-1.5 px-2 font-mono ${allPass ? 'text-emerald-700' : 'text-rose-600'}"><strong>δ = ${s.gravRes.maxDeflMm.toFixed(2)} mm • Max Ratio = ${s.maxRatio.toFixed(2)} (${allPass ? 'PASS' : 'FAIL'})</strong></td>
         </tr>
       </tbody>
     `;
@@ -2638,6 +2916,7 @@ function populateTrussCalculationReport() {
   // 2 & 3. Draw 2D FBD, 3D Isometric, and SFD/BMD Canvases
   drawReportTruss2DCanvas('repTruss2DCanvas');
   drawReportTruss3DCanvas('repTruss3DCanvas');
+  updateReport3DToolbarUI();
   drawReportTrussDiagramsCanvas('repTrussDiagramsCanvas');
 
   // 4.1 Wind Load Box
@@ -2699,24 +2978,24 @@ function populateTrussCalculationReport() {
     ];
     secTable.innerHTML = `
       <thead>
-        <tr>
-          <th>หมวดหมู่ชิ้นส่วนโครงสร้าง</th>
-          <th>ขนาดหน้าตัดเหล็ก (Section)</th>
-          <th>พื้นที่หน้าตัด A (cm²)</th>
-          <th>โมเมนต์ความเฉื่อย Ix / Iy (cm⁴)</th>
-          <th>รัศมีไจเรชัน r_min (cm)</th>
-          <th>น้ำหนัก (kg/m)</th>
+        <tr class="bg-slate-100 text-slate-700">
+          <th class="py-1.5 px-3 font-bold border-b border-slate-300 text-left">หมวดหมู่ชิ้นส่วนโครงสร้าง</th>
+          <th class="py-1.5 px-2 font-bold border-b border-slate-300 text-left">ขนาดหน้าตัดเหล็ก (Section)</th>
+          <th class="py-1.5 px-2 font-bold border-b border-slate-300 text-right">พื้นที่ A (cm²)</th>
+          <th class="py-1.5 px-2 font-bold border-b border-slate-300 text-right">Ix / Iy (cm⁴)</th>
+          <th class="py-1.5 px-2 font-bold border-b border-slate-300 text-right">r_min (cm)</th>
+          <th class="py-1.5 px-2.5 font-bold border-b border-slate-300 text-right">น้ำหนัก (kg/m)</th>
         </tr>
       </thead>
       <tbody>
         ${secRows.map(r => `
-          <tr>
-            <td class="text-left font-semibold">${r.role}</td>
-            <td class="font-mono font-bold">${r.sec.name}</td>
-            <td class="font-mono">${r.sec.A.toFixed(2)}</td>
-            <td class="font-mono">${r.sec.Ix.toFixed(1)} / ${r.sec.Iy.toFixed(1)}</td>
-            <td class="font-mono">${Math.min(r.sec.rx, r.sec.ry).toFixed(2)}</td>
-            <td class="font-mono">${r.sec.kg.toFixed(2)}</td>
+          <tr class="border-b border-slate-200/70 hover:bg-slate-50">
+            <td class="py-1.5 px-3 text-left font-semibold text-slate-800">${r.role}</td>
+            <td class="py-1.5 px-2 font-mono font-bold text-slate-900">${r.sec.name}</td>
+            <td class="py-1.5 px-2 text-right font-mono">${r.sec.A.toFixed(2)}</td>
+            <td class="py-1.5 px-2 text-right font-mono">${r.sec.Ix.toFixed(1)} / ${r.sec.Iy.toFixed(1)}</td>
+            <td class="py-1.5 px-2 text-right font-mono">${Math.min(r.sec.rx, r.sec.ry).toFixed(2)}</td>
+            <td class="py-1.5 px-2.5 text-right font-mono font-semibold text-slate-700">${r.sec.kg.toFixed(2)}</td>
           </tr>
         `).join('')}
       </tbody>
@@ -2728,35 +3007,37 @@ function populateTrussCalculationReport() {
   if (memTable) {
     memTable.innerHTML = `
       <thead>
-        <tr>
-          <th>ชิ้นส่วน</th>
-          <th>หมวดหมู่</th>
-          <th>หน้าตัดเหล็ก</th>
-          <th>ความยาว (m)</th>
-          <th>KL/r</th>
-          <th>แรงกด Gravity (kg)</th>
-          <th>แรงลมยก Uplift (kg)</th>
-          <th>กำลังที่ยอมให้ (kg)</th>
-          <th>Ratio</th>
-          <th>สถานะ</th>
+        <tr class="bg-slate-100 text-slate-700">
+          <th class="py-1.5 px-2.5 font-bold border-b border-slate-300 text-left">ชิ้นส่วน</th>
+          <th class="py-1.5 px-2 font-bold border-b border-slate-300 text-center">หมวดหมู่</th>
+          <th class="py-1.5 px-2 font-bold border-b border-slate-300 text-left">หน้าตัดเหล็ก</th>
+          <th class="py-1.5 px-2 font-bold border-b border-slate-300 text-right">L (m)</th>
+          <th class="py-1.5 px-2 font-bold border-b border-slate-300 text-right">KL/r</th>
+          <th class="py-1.5 px-2.5 font-bold border-b border-slate-300 text-right">Gravity (kg)</th>
+          <th class="py-1.5 px-2.5 font-bold border-b border-slate-300 text-right">Uplift (kg)</th>
+          <th class="py-1.5 px-2 font-bold border-b border-slate-300 text-right">กำลังยอมให้</th>
+          <th class="py-1.5 px-2 font-bold border-b border-slate-300 text-right">Ratio</th>
+          <th class="py-1.5 px-2.5 font-bold border-b border-slate-300 text-center">สถานะ</th>
         </tr>
       </thead>
       <tbody>
         ${s.members.map(m => {
           const capKg = m.force >= 0 ? m.capTensionKg : m.capCompKg;
+          const isTen = m.fGrav >= 0;
           const groupName = m.group === 'TC' ? 'Top Chord' : m.group === 'BC' ? 'Bottom Chord' : m.group === 'V' ? 'Vertical' : 'Diagonal';
+          const pass = m.status === 'PASS';
           return `
-            <tr>
-              <td class="font-mono font-bold">${m.label}</td>
-              <td>${groupName}</td>
-              <td class="font-mono">${m.section.id}</td>
-              <td class="font-mono">${m.length.toFixed(2)}</td>
-              <td class="font-mono">${m.KLr.toFixed(1)}</td>
-              <td class="font-mono">${m.fGrav >= 0 ? '+' : ''}${m.fGrav.toFixed(0)} (${m.fGrav >= 0 ? 'T' : 'C'})</td>
-              <td class="font-mono">${m.fUplift >= 0 ? '+' : ''}${m.fUplift.toFixed(0)}</td>
-              <td class="font-mono">${capKg.toFixed(0)}</td>
-              <td class="font-mono font-bold">${m.ratio.toFixed(2)}</td>
-              <td class="font-bold ${m.status === 'PASS' ? 'text-emerald-700' : 'text-rose-600'}">${m.status === 'PASS' ? 'ผ่าน (OK)' : 'ไม่ผ่าน (NG)'}</td>
+            <tr class="border-b border-slate-200/70 hover:bg-slate-50">
+              <td class="py-1 px-2.5 font-mono font-bold text-slate-900">${m.label}</td>
+              <td class="py-1 px-2 text-center text-[10px]"><span class="px-1.5 py-0.5 rounded ${m.group === 'TC' ? 'bg-indigo-50 text-indigo-700' : m.group === 'BC' ? 'bg-sky-50 text-sky-700' : 'bg-slate-100 text-slate-600'} font-semibold">${groupName}</span></td>
+              <td class="py-1 px-2 font-mono text-slate-700 text-[10px]">${m.section.id}</td>
+              <td class="py-1 px-2 text-right font-mono">${m.length.toFixed(2)}</td>
+              <td class="py-1 px-2 text-right font-mono">${m.KLr.toFixed(1)}</td>
+              <td class="py-1 px-2.5 text-right font-mono font-semibold ${isTen ? 'text-sky-700' : 'text-emerald-700'}">${m.fGrav >= 0 ? '+' : ''}${m.fGrav.toFixed(0)} <span class="text-[9px] px-1 py-0.2 rounded font-bold ${isTen ? 'bg-sky-100 text-sky-800' : 'bg-emerald-100 text-emerald-800'}">${isTen ? 'T' : 'C'}</span></td>
+              <td class="py-1 px-2.5 text-right font-mono ${Math.abs(m.fUplift) > 0 ? 'text-rose-600' : 'text-slate-400'}">${m.fUplift >= 0 ? '+' : ''}${m.fUplift.toFixed(0)}</td>
+              <td class="py-1 px-2 text-right font-mono">${capKg.toFixed(0)}</td>
+              <td class="py-1 px-2 text-right font-mono font-bold ${pass ? 'text-slate-800' : 'text-rose-600'}">${m.ratio.toFixed(2)}</td>
+              <td class="py-1 px-2.5 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${pass ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${pass ? 'PASS' : 'FAIL'}</span></td>
             </tr>
           `;
         }).join('')}
