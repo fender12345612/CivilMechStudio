@@ -47,6 +47,9 @@ let mouse2D = {
   memberStartNodeId: null
 };
 
+// Active category focus tab from the left rail (Nodes, Members, Supports, Loads)
+let active2DFocusTab = null;
+
 // Undo / Redo & Version Checkpoints History
 let history2D = [];
 let redoStack2D = [];
@@ -1093,13 +1096,56 @@ function toggle2DReactionsOverlay() {
 }
 
 function set2DInspectorTab(tab) {
-  ['Nodes', 'Members', 'Supports', 'Loads', 'Cases', 'Materials', 'Sections', 'History'].forEach(name => {
+  // Toggle category focus on/off
+  active2DFocusTab = (active2DFocusTab === tab) ? null : tab;
+
+  const names = ['Nodes', 'Members', 'Supports', 'Loads', 'Cases', 'Materials', 'Sections', 'History'];
+  names.forEach(name => {
     const btn = document.getElementById(`railBtn${name}`);
     if (btn) {
-      btn.classList.toggle('bg-teal-500/15', name.toLowerCase() === tab);
-      btn.classList.toggle('text-teal-600', name.toLowerCase() === tab);
+      const isCurrentActive = active2DFocusTab && (name.toLowerCase() === active2DFocusTab);
+      btn.classList.toggle('bg-teal-500/25', isCurrentActive);
+      btn.classList.toggle('text-teal-400', isCurrentActive);
+      btn.classList.toggle('ring-2', isCurrentActive);
+      btn.classList.toggle('ring-teal-400/60', isCurrentActive);
+      btn.classList.toggle('shadow-lg', isCurrentActive);
     }
   });
+
+  // Smooth scroll inspector to relevant section
+  if (active2DFocusTab === 'nodes') {
+    const el = document.getElementById('table2DNodes');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } else if (active2DFocusTab === 'members') {
+    const el = document.getElementById('table2DMembers');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } else if (active2DFocusTab === 'supports') {
+    const el = document.getElementById('table2DReactions');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } else if (active2DFocusTab === 'loads') {
+    const el = document.getElementById('tool2DLoadFx');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } else if (active2DFocusTab === 'history') {
+    const el = document.getElementById('list2DActivityHistory');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // Floating notification toast
+  if (active2DFocusTab && typeof showNotification === 'function') {
+    const labelMap = {
+      nodes: 'เรืองแสงโฟกัสจุดต่อทั้งหมด (Nodes Glowing)',
+      members: 'เรืองแสงโฟกัสชิ้นส่วนทั้งหมด (Members Glowing)',
+      supports: 'เรืองแสงโฟกัสจุดรองรับทั้งหมด (Supports Glowing)',
+      loads: 'เรืองแสงโฟกัสแรงกระทำทั้งหมด (Loads Glowing)',
+      cases: 'กรณีแรงกระทำ (Load Cases)',
+      materials: 'คุณสมบัติวัสดุ (Materials)',
+      sections: 'หน้าตัดชิ้นส่วน (Sections)',
+      history: 'ประวัติโมเดล (History)'
+    };
+    showNotification('โฟกัสโครงสร้าง 2D', labelMap[active2DFocusTab] || active2DFocusTab);
+  }
+
+  render2DWorkspace();
 }
 
 /*************************************************************************
@@ -1391,7 +1437,9 @@ function render2DWorkspace(targetCanvasId = 'canvas2DWorkspace') {
     const p1 = w2s(n1.x, n1.y);
     const p2 = w2s(n2.x, n2.y);
 
-    const isSelected = !isSnapshot && mouse2D.selectedMemberId === m.id;
+    const isSingleSelected = !isSnapshot && mouse2D.selectedMemberId === m.id;
+    const isCategoryMemberFocus = !isSnapshot && (active2DFocusTab === 'members' || active2DFocusTab === 'sections' || active2DFocusTab === 'materials');
+    const isSelected = isSingleSelected || isCategoryMemberFocus;
     const isHovered = !isSnapshot && mouse2D.hoveredMemberId === m.id;
 
     if (isSelected) {
@@ -1479,8 +1527,7 @@ function render2DWorkspace(targetCanvasId = 'canvas2DWorkspace') {
     if (m.w && Math.abs(m.w) > 0) {
       const udlH = 34;
       const top1 = { x: p1.x, y: p1.y - udlH };
-      const top2 = { x: p2.x, y: p2.y - udlH };
-      const isUdlGlowing = isSelected;
+      const isUdlGlowing = isSingleSelected || (!isSnapshot && active2DFocusTab === 'loads');
 
       if (isUdlGlowing) {
         ctx.save();
@@ -1557,9 +1604,16 @@ function render2DWorkspace(targetCanvasId = 'canvas2DWorkspace') {
 
     // Draw Support Symbol at Node
     if (n.support && n.support !== 'none') {
-      ctx.strokeStyle = lightStyle ? '#334155' : '#94a3b8';
-      ctx.fillStyle = lightStyle ? '#e2e8f0' : '#1e293b';
-      ctx.lineWidth = 2;
+      const isSupportGlowing = !isSnapshot && (active2DFocusTab === 'supports');
+      if (isSupportGlowing) {
+        ctx.save();
+        ctx.shadowColor = '#10b981';
+        ctx.shadowBlur = 26;
+      }
+
+      ctx.strokeStyle = isSupportGlowing ? '#34d399' : (lightStyle ? '#334155' : '#94a3b8');
+      ctx.fillStyle = isSupportGlowing ? '#059669' : (lightStyle ? '#e2e8f0' : '#1e293b');
+      ctx.lineWidth = isSupportGlowing ? 3 : 2;
       if (n.support === 'pinned' || n.support === 'roller') {
         ctx.beginPath();
         ctx.moveTo(p.x, p.y + 4);
@@ -1579,6 +1633,10 @@ function render2DWorkspace(targetCanvasId = 'canvas2DWorkspace') {
         ctx.strokeRect(p.x - 14, p.y + 4, 28, 10);
       }
 
+      if (isSupportGlowing) {
+        ctx.restore();
+      }
+
       // Live Reaction Vector Readout on Canvas
       if (show2DReactions && frame2D.solved) {
         ctx.fillStyle = '#059669';
@@ -1591,10 +1649,12 @@ function render2DWorkspace(targetCanvasId = 'canvas2DWorkspace') {
       }
     }
 
-    // Node selection & load focus state
-    const isSel = !isSnapshot && (mouse2D.selectedNodeId === n.id || mouse2D.memberStartNodeId === n.id);
+    // Node selection & load focus state (supports single selection and rail category focus)
+    const isSingleNodeSel = !isSnapshot && (mouse2D.selectedNodeId === n.id || mouse2D.memberStartNodeId === n.id);
+    const isNodeCategoryFocus = !isSnapshot && (active2DFocusTab === 'nodes');
+    const isSel = isSingleNodeSel || isNodeCategoryFocus;
     const isHov = !isSnapshot && mouse2D.hoveredNodeId === n.id;
-    const isLoadGlowing = isSel;
+    const isLoadGlowing = isSingleNodeSel || (!isSnapshot && active2DFocusTab === 'loads');
 
     // Draw Nodal Point Loads (Glows vividly when the node/load is selected/focused)
     if (n.fy && Math.abs(n.fy) > 0) {
