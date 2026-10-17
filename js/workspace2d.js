@@ -572,11 +572,21 @@ function load2DPreset(presetName) {
     ];
   }
 
+  // Pre-calculate member length so it is immediately defined even before solving
+  const nMap = {};
+  frame2D.nodes.forEach(n => { nMap[n.id] = n; });
+  frame2D.members.forEach(m => {
+    const n1 = nMap[m.n1], n2 = nMap[m.n2];
+    if (n1 && n2) {
+      m.length = Math.hypot(n2.x - n1.x, n2.y - n1.y);
+    }
+  });
+
   const titleEl = document.getElementById('frame2DTitleInput');
   if (titleEl) titleEl.value = frame2D.title;
   record2DHistory(`Loaded ${frame2D.title}`);
-  focus2DCamera();
   solve2DFrame();
+  focus2DCamera();
 }
 
 /*************************************************************************
@@ -747,7 +757,32 @@ function solve2DFrame(showToast = false) {
     }
   }
 
-  const uf = solveGaussian(Kff, Ff);
+  const solveSystem = (typeof solveGaussian === 'function') ? solveGaussian : function(A, b) {
+    const n = b.length;
+    const M = A.map((row, i) => [...row, b[i]]);
+    for (let i = 0; i < n; i++) {
+      let maxRow = i;
+      for (let k = i + 1; k < n; k++) {
+        if (Math.abs(M[k][i]) > Math.abs(M[maxRow][i])) maxRow = k;
+      }
+      [M[i], M[maxRow]] = [M[maxRow], M[i]];
+      if (Math.abs(M[i][i]) < 1e-12) continue;
+      for (let k = i + 1; k < n; k++) {
+        const c = M[k][i] / M[i][i];
+        for (let j = i; j <= n; j++) M[k][j] -= c * M[i][j];
+      }
+    }
+    const x = new Array(n).fill(0);
+    for (let i = n - 1; i >= 0; i--) {
+      if (Math.abs(M[i][i]) < 1e-12) continue;
+      let sum = M[i][n];
+      for (let j = i + 1; j < n; j++) sum -= M[i][j] * x[j];
+      x[i] = sum / M[i][i];
+    }
+    return x;
+  };
+
+  const uf = solveSystem(Kff, Ff);
   const U = new Array(ndof).fill(0);
   for (let i = 0; i < nf; i++) U[freeDofs[i]] = uf[i];
 
@@ -1498,7 +1533,9 @@ function render2DWorkspace(targetCanvasId = 'canvas2DWorkspace') {
     // Member ID & Length Callout Label (e.g. "M9 / 2.915 m" or "9.564 ft")
     const midX = (p1.x + p2.x) / 2;
     const midY = (p1.y + p2.y) / 2;
-    const lenDisp = Units.len(m.length || 0);
+    const geomLen = Math.hypot(n2.x - n1.x, n2.y - n1.y);
+    const mLen = (m.length && m.length > 1e-4) ? m.length : geomLen;
+    const lenDisp = Units.len(mLen);
     const L_str = Math.abs(lenDisp - Math.round(lenDisp)) < 1e-3
       ? `${Math.round(lenDisp)} ${Units.uLen()}`
       : `${lenDisp.toFixed(3)} ${Units.uLen()}`;
@@ -1527,6 +1564,7 @@ function render2DWorkspace(targetCanvasId = 'canvas2DWorkspace') {
     if (m.w && Math.abs(m.w) > 0) {
       const udlH = 34;
       const top1 = { x: p1.x, y: p1.y - udlH };
+      const top2 = { x: p2.x, y: p2.y - udlH };
       const isUdlGlowing = isSingleSelected || (!isSnapshot && active2DFocusTab === 'loads');
 
       if (isUdlGlowing) {
@@ -1568,7 +1606,7 @@ function render2DWorkspace(targetCanvasId = 'canvas2DWorkspace') {
       // Label above UDL
       ctx.font = isUdlGlowing ? 'bold 11px Inter, sans-serif' : 'bold 10px Inter, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(`${+Units.dist(m.w).toFixed(2)} ${Units.uDist()}`, (top1.x + top2.x) / 2, top1.y - 6);
+      ctx.fillText(`${+Units.dist(m.w).toFixed(2)} ${Units.uDist()}`, (top1.x + top2.x) / 2, Math.min(top1.y, top2.y) - 6);
 
       if (isUdlGlowing) {
         ctx.restore();
