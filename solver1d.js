@@ -376,9 +376,9 @@ function switchWorkspace(ws) {
     if (s === ws) {
       secEl.classList.remove('hidden');
       secEl.classList.add('flex');
-      btnEl.className = 'px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 whitespace-nowrap bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-2xs';
+      btnEl.className = 'px-3 py-1.5 rounded-sm text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap bg-[#16191D] text-white dark:bg-[#FAF9F6] dark:text-[#16191D] shadow-xs';
       if (mobBtnEl) {
-        mobBtnEl.className = 'flex-1 py-1.5 px-1 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/30 transition-all';
+        mobBtnEl.className = 'flex-1 py-1.5 px-1 rounded-sm flex flex-col items-center justify-center text-[10px] font-bold bg-[#D63A2F]/15 text-[#D63A2F] dark:text-[#E54D42] border border-[#D63A2F]/30 transition-all';
       }
     } else {
       secEl.classList.add('hidden');
@@ -725,11 +725,11 @@ function syncSectionModeUI() {
 
   if (btnUse && btnIgnore) {
     if (model.ignoreSection) {
-      btnIgnore.className = 'py-1.5 px-2 rounded-lg font-bold transition-all flex items-center justify-center space-x-1.5 bg-emerald-600 text-white shadow-2xs cursor-pointer';
-      btnUse.className = 'py-1.5 px-2 rounded-lg font-semibold transition-all flex items-center justify-center space-x-1.5 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer';
+      btnIgnore.className = 'py-1.5 px-2 rounded-sm font-bold transition-all flex items-center justify-center space-x-1.5 bg-[#146C43] text-white shadow-xs cursor-pointer';
+      btnUse.className = 'py-1.5 px-2 rounded-sm font-semibold transition-all flex items-center justify-center space-x-1.5 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer';
     } else {
-      btnUse.className = 'py-1.5 px-2 rounded-lg font-bold transition-all flex items-center justify-center space-x-1.5 bg-sky-600 text-white shadow-2xs cursor-pointer';
-      btnIgnore.className = 'py-1.5 px-2 rounded-lg font-semibold transition-all flex items-center justify-center space-x-1.5 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer';
+      btnUse.className = 'py-1.5 px-2 rounded-sm font-bold transition-all flex items-center justify-center space-x-1.5 bg-[#D63A2F] text-white shadow-xs cursor-pointer';
+      btnIgnore.className = 'py-1.5 px-2 rounded-sm font-semibold transition-all flex items-center justify-center space-x-1.5 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer';
     }
   }
 
@@ -2166,11 +2166,11 @@ function renderBeamSchematic() {
   const L = model.length;
   const xToPx = x => padL + (x / L) * plotW;
 
-  ctx.fillStyle = isDarkMode ? '#090f1d' : '#f8fafc';
+  ctx.fillStyle = isDarkMode ? '#1A1D22' : '#FAF9F6';
   ctx.fillRect(0, 0, W, H);
 
   // Subtle station grid lines
-  ctx.strokeStyle = isDarkMode ? '#1e293b' : '#e2e8f0';
+  ctx.strokeStyle = isDarkMode ? '#2D323B' : '#E2E2DC';
   ctx.lineWidth = 1;
   for (let x = 0; x <= L + 0.001; x += 0.5) {
     const px = xToPx(x);
@@ -2200,8 +2200,8 @@ function renderBeamSchematic() {
   }
 
   // Main Beam Bar
-  ctx.fillStyle = isDarkMode ? '#64748b' : '#737373';
-  ctx.strokeStyle = isDarkMode ? '#94a3b8' : '#525252';
+  ctx.fillStyle = isDarkMode ? '#2D323B' : '#16191D';
+  ctx.strokeStyle = isDarkMode ? '#E5E7EB' : '#16191D';
   ctx.lineWidth = 1.5;
   ctx.fillRect(padL, beamY - 7, plotW, 14);
   ctx.strokeRect(padL, beamY - 7, plotW, 14);
@@ -2442,14 +2442,12 @@ function renderBeamSchematic() {
 
   // Interactive Station Cursor Line
   const curPx = xToPx(hoveredBeamX);
-  ctx.strokeStyle = '#38bdf8';
-  ctx.lineWidth = 1.5;
-  ctx.setLineDash([4, 3]);
-  ctx.beginPath();
-  ctx.moveTo(curPx, 12);
-  ctx.lineTo(curPx, H - 12);
-  ctx.stroke();
-  ctx.setLineDash([]);
+  ctx.strokeStyle = isDarkMode ? '#E54D42' : '#D63A2F';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(curPx, 8);
+    ctx.lineTo(curPx, H - 8);
+    ctx.stroke();
 }
 
 function renderSingleDiagram(canvasId, key, colorHex, fillRgba, unitStr, extremaPos, extremaNeg, captionId, convFn = v => v) {
@@ -2470,7 +2468,8 @@ function renderSingleDiagram(canvasId, key, colorHex, fillRgba, unitStr, extrema
   const plotH = H - padT - padB;
   const L = model.length;
 
-  ctx.fillStyle = isDarkMode ? '#090f1d' : '#ffffff';
+  // Swiss Civil Monograph Canvas Background
+  ctx.fillStyle = isDarkMode ? '#1A1D22' : '#FAF9F6';
   ctx.fillRect(0, 0, W, H);
 
   const vals = solution.samples.map(s => s[key]);
@@ -2483,8 +2482,8 @@ function renderSingleDiagram(canvasId, key, colorHex, fillRgba, unitStr, extrema
   const xToPx = x => padL + (x / L) * plotW;
   const yToPx = v => zeroY - v * scaleY;
 
-  // Grid
-  ctx.strokeStyle = isDarkMode ? '#1e293b' : '#e2e8f0';
+  // Engineering Station Hairline Grid
+  ctx.strokeStyle = isDarkMode ? '#2D323B' : '#E2E2DC';
   ctx.lineWidth = 1;
   for (let x = 0; x <= L + 0.001; x += 0.5) {
     const px = xToPx(x);
@@ -2493,22 +2492,23 @@ function renderSingleDiagram(canvasId, key, colorHex, fillRgba, unitStr, extrema
     ctx.lineTo(px, H - padB);
     ctx.stroke();
     if (Math.abs(x % 1) < 1e-3 || Math.abs((x - 0.5) % 1) < 1e-3) {
-      ctx.fillStyle = isDarkMode ? '#64748b' : '#475569';
+      ctx.fillStyle = isDarkMode ? '#8B949E' : '#555C66';
       ctx.font = '10px JetBrains Mono';
       ctx.textAlign = 'center';
       ctx.fillText(Units.len(x).toFixed(1), px, H - 6);
     }
   }
 
-  // Zero baseline (Red reference line)
-  ctx.strokeStyle = '#f43f5e';
+  // Zero baseline (Reference Hairline)
+  ctx.strokeStyle = isDarkMode ? '#E54D42' : '#D63A2F';
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(padL, zeroY);
   ctx.lineTo(padL + plotW, zeroY);
   ctx.stroke();
 
-  // Shaded Area
+  // Shaded Area & 45° Directional Mechanics Hatching
+  ctx.save();
   ctx.beginPath();
   ctx.moveTo(xToPx(0), zeroY);
   solution.samples.forEach(s => ctx.lineTo(xToPx(s.x), yToPx(s[key])));
@@ -2516,6 +2516,26 @@ function renderSingleDiagram(canvasId, key, colorHex, fillRgba, unitStr, extrema
   ctx.closePath();
   ctx.fillStyle = fillRgba;
   ctx.fill();
+  ctx.clip();
+
+  // Directional 45-degree hatching lines for structural legibility
+  ctx.strokeStyle = colorHex;
+  ctx.lineWidth = 1;
+  ctx.globalAlpha = isDarkMode ? 0.28 : 0.22;
+  const hatchStep = 8;
+  for (let d = -plotH; d <= plotW + plotH; d += hatchStep) {
+    ctx.beginPath();
+    ctx.moveTo(padL + d, zeroY);
+    ctx.lineTo(padL + d + plotH, zeroY - plotH);
+    ctx.stroke();
+  }
+  for (let d = -plotH; d <= plotW + plotH; d += hatchStep) {
+    ctx.beginPath();
+    ctx.moveTo(padL + d, zeroY);
+    ctx.lineTo(padL + d + plotH, zeroY + plotH);
+    ctx.stroke();
+  }
+  ctx.restore();
 
   // Curve Stroke
   ctx.beginPath();
@@ -2527,28 +2547,26 @@ function renderSingleDiagram(canvasId, key, colorHex, fillRgba, unitStr, extrema
   ctx.lineWidth = 2;
   ctx.stroke();
 
-  // Red Extrema Dots
+  // Extrema Indicator Dots
   [extremaPos, extremaNeg].forEach(ext => {
     if (ext && isFinite(ext.val) && Math.abs(ext.val) > 1e-5) {
       const px = xToPx(ext.x);
       const py = yToPx(ext.val);
-      ctx.fillStyle = '#ef4444';
+      ctx.fillStyle = isDarkMode ? '#E54D42' : '#D63A2F';
       ctx.beginPath();
       ctx.arc(px, py, 3.8, 0, Math.PI * 2);
       ctx.fill();
     }
   });
 
-  // Hover Scrubber Line
+  // Synchronized Station Datum Line (Swiss Vermilion 1px Line)
   const curPx = xToPx(hoveredBeamX);
-  ctx.strokeStyle = '#38bdf8';
-  ctx.lineWidth = 1.2;
-  ctx.setLineDash([3, 3]);
+  ctx.strokeStyle = isDarkMode ? '#E54D42' : '#D63A2F';
+  ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(curPx, padT);
   ctx.lineTo(curPx, H - padB);
   ctx.stroke();
-  ctx.setLineDash([]);
 
   if (captionId && extremaPos && extremaNeg) {
     const capEl = document.getElementById(captionId);
@@ -2558,7 +2576,6 @@ function renderSingleDiagram(canvasId, key, colorHex, fillRgba, unitStr, extrema
     }
   }
 }
-
 function renderAllDiagrams() {
   const isTH = currentLang === 'th';
   const suiteTitle = document.getElementById('diagramsSuiteHeaderTitle');

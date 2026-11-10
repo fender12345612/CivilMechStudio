@@ -1,12 +1,12 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#16191D">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>CivilMech Studio Version 2.0 (Mobile Edition) | ระบบวิเคราะห์โครงสร้างวิศวกรรมโยธา 1D • 2D • 3D</title>
+  <title>CivilMech Studio Version 2.0 (Mobile & Desktop Edition) | ระบบวิเคราะห์โครงสร้างวิศวกรรมโยธา 1D • 2D • 3D</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -24,6 +24,22 @@
       darkMode: 'class',
       theme: {
         extend: {
+          colors: {
+            cm: {
+              bg: 'var(--cm-bg)',
+              surface: 'var(--cm-surface)',
+              panel: 'var(--cm-panel)',
+              header: 'var(--cm-header)',
+              ink: 'var(--cm-ink)',
+              'ink-muted': 'var(--cm-ink-muted)',
+              rule: 'var(--cm-rule)',
+              'rule-strong': 'var(--cm-rule-strong)',
+              vermilion: 'var(--cm-vermilion)',
+              prussian: 'var(--cm-prussian)',
+              ok: 'var(--cm-ok)',
+              amber: 'var(--cm-amber)'
+            }
+          },
           fontFamily: {
             sans: ['Sarabun', 'Inter', 'system-ui', 'sans-serif'],
             display: ['Prompt', 'Inter', 'system-ui', 'sans-serif'],
@@ -45,14 +61,118 @@
   </script>
 
   <style>
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #64748b55; border-radius: 9999px; }
-    ::-webkit-scrollbar-thumb:hover { background: #64748b99; }
+    :root {
+      --cm-bg: #F5F5F2;
+      --cm-surface: #FAF9F6;
+      --cm-panel: #EFEFE9;
+      --cm-header: #16191D;
+      --cm-ink: #16191D;
+      --cm-ink-secondary: #3E444D;
+      --cm-ink-muted: #555C66;
+      --cm-rule: #C8C7C0;
+      --cm-rule-strong: #16191D;
+      --cm-vermilion: #D63A2F;
+      --cm-prussian: #1D4E89;
+      --cm-ok: #146C43;
+      --cm-amber: #9A4D08;
+    }
 
-    * { -webkit-tap-highlight-color: transparent; }
-    html { overflow-x: hidden; }
-    body { overflow-x: hidden; }
+    .dark {
+      --cm-bg: #141619;
+      --cm-surface: #1A1D22;
+      --cm-panel: #111316;
+      --cm-header: #0E1013;
+      --cm-ink: #F2F2EE;
+      --cm-ink-secondary: #C7CBD2;
+      --cm-ink-muted: #969DA9;
+      --cm-rule: #2D323B;
+      --cm-rule-strong: #E5E5E0;
+      --cm-vermilion: #E54D42;
+      --cm-prussian: #5B9BD5;
+      --cm-ok: #34D399;
+      --cm-amber: #F59E0B;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html {
+      overflow-x: hidden;
+    }
+
+    body {
+      overflow-x: hidden;
+      background-color: var(--cm-bg);
+      color: var(--cm-ink);
+      font-family: 'Sarabun', 'Prompt', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    ::selection {
+      background-color: var(--cm-vermilion);
+      color: #FFFFFF;
+    }
+
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--cm-rule);
+      border-radius: 0;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--cm-ink-muted);
+    }
+
+    .preset-scroll-bar::-webkit-scrollbar {
+      height: 5px;
+    }
+    .preset-scroll-bar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .preset-scroll-bar::-webkit-scrollbar-thumb {
+      background: var(--cm-rule);
+      border-radius: 0;
+    }
+    .preset-scroll-bar::-webkit-scrollbar-thumb:hover {
+      background: var(--cm-vermilion);
+    }
+
+    /* Range Slider Styling */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: var(--cm-rule);
+      height: 4px;
+      border-radius: 0;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      background: var(--cm-vermilion);
+      border: 1px solid var(--cm-header);
+      cursor: pointer;
+      border-radius: 0;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--cm-vermilion);
+      outline-offset: 1px;
+    }
+
+    .font-mono, .tabular-nums, input[type="number"], .kpi-val {
+      font-family: 'JetBrains Mono', monospace !important;
+      font-variant-numeric: tabular-nums;
+    }
 
     /* Touch Gesture Optimization for Interactive Engineering Canvases */
     #canvas2DWorkspace, #canvas3DViewer, #truss3DCanvas {
@@ -66,25 +186,18 @@
       -webkit-user-select: none;
     }
 
-    .preset-scroll-bar::-webkit-scrollbar { height: 5px; }
-    .preset-scroll-bar::-webkit-scrollbar-track { background: rgba(148, 163, 184, 0.15); border-radius: 9999px; }
-    .preset-scroll-bar::-webkit-scrollbar-thumb { background: rgba(14, 165, 233, 0.6); border-radius: 9999px; }
-    .preset-scroll-bar::-webkit-scrollbar-thumb:hover { background: rgba(14, 165, 233, 0.9); }
-
     .bg-blueprint-light {
       background-color: #f8fafc;
       background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
       background-size: 20px 20px;
     }
-    /* Dark mode page background (the body carries "dark:bg-blueprint-dark", which is not a real Tailwind
-       utility, so we target it explicitly here to guarantee a dark background in dark mode) */
     html.dark,
     html.dark body,
     .dark .bg-blueprint-dark,
     .dark .bg-blueprint-light,
     .dark [class~="dark:bg-blueprint-dark"] {
-      background-color: #070b14;
-      background-image: radial-gradient(#1e293b 1px, transparent 1px);
+      background-color: #0E1013;
+      background-image: radial-gradient(#2D323B 1px, transparent 1px);
       background-size: 20px 20px;
       color-scheme: dark;
     }
@@ -92,30 +205,30 @@
 
     /* 2D CAD Grid Background */
     .cad-grid-bg {
-      background-color: #f8fafc;
+      background-color: #FAF9F6;
       background-image: 
-        linear-gradient(to right, #e2e8f0 1px, transparent 1px),
-        linear-gradient(to bottom, #e2e8f0 1px, transparent 1px);
+        linear-gradient(to right, #E2E2DC 1px, transparent 1px),
+        linear-gradient(to bottom, #E2E2DC 1px, transparent 1px);
       background-size: 25px 25px;
     }
     .dark .cad-grid-bg {
-      background-color: #090d16;
+      background-color: #111316;
       background-image: 
-        linear-gradient(to right, #1e293b66 1px, transparent 1px),
-        linear-gradient(to bottom, #1e293b66 1px, transparent 1px);
+        linear-gradient(to right, #2D323B 1px, transparent 1px),
+        linear-gradient(to bottom, #2D323B 1px, transparent 1px);
       background-size: 25px 25px;
     }
 
     /* Engineering Calculation Sheet A4 Styling */
     .calc-sheet {
       background: #ffffff;
-      color: #0f172a;
+      color: #16191D;
       border: 1px solid #cbd5e1;
       box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.15);
       font-family: 'Inter', 'Sarabun', sans-serif;
     }
     .calc-sheet-frame {
-      border: 1.5px solid #334155;
+      border: 1.5px solid #16191D;
     }
     .calc-table th, .calc-table td {
       border: 1px solid #cbd5e1;
@@ -126,7 +239,7 @@
     .calc-table th {
       background-color: #f8fafc;
       font-weight: 700;
-      color: #1e293b;
+      color: #16191D;
     }
 
     /* Mobile Screen Adaptations for A4 Calculation Sheets & Tables */
@@ -149,7 +262,7 @@
     @media print {
       html, body {
         background: #ffffff !important;
-        color: #000000 !important;
+        color: #16191D !important;
         margin: 0 !important;
         padding: 0 !important;
       }
@@ -188,7 +301,7 @@
         border: none !important;
         width: 100% !important;
         max-width: 100% !important;
-        margin: 0 !important;
+        margin: 0 0 10mm 0 !important;
         padding: 0 !important;
         page-break-after: always;
         break-after: page;
@@ -301,103 +414,101 @@
   <!-- ===================================================================== -->
   <!-- TOP GLOBAL NAVIGATION & WORKSPACE SWITCHER (MOBILE + DESKTOP READY)   -->
   <!-- ===================================================================== -->
-  <header class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50 no-print w-full">
-    <div class="w-full max-w-[1720px] mx-auto px-2.5 sm:px-4 py-1.5 lg:py-0">
-      <div class="flex flex-wrap lg:flex-nowrap items-center justify-between lg:h-16 gap-y-2 gap-x-2">
+  <header class="bg-[#16191D] text-[#F5F5F2] border-b-2 border-[#D63A2F] sticky top-0 z-50 no-print w-full">
+    <div class="w-full max-w-[1720px] mx-auto px-2.5 sm:px-4 py-2 lg:py-0">
+      <div class="flex flex-wrap lg:flex-nowrap items-center justify-between lg:h-14 gap-y-2 gap-x-2">
         
         <!-- 1. Left Brand Identity & Developer Attribution -->
-        <div class="flex items-center space-x-2 shrink-0 min-w-0">
-          <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-700 flex items-center justify-center shadow-md shadow-teal-500/20 border border-white/20 shrink-0">
-            <i class="fa-solid fa-compass-drafting text-sm sm:text-base text-white"></i>
+        <div class="flex items-center space-x-2.5 shrink-0 min-w-0">
+          <div class="w-8 h-8 rounded-sm bg-[#D63A2F] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-xs">
+            <i class="fa-solid fa-compass-drafting text-xs"></i>
           </div>
           <div class="min-w-0">
-            <div class="flex items-center space-x-1">
-              <span class="font-display text-xs sm:text-base font-extrabold tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
-                Civil<span class="text-teal-500">Mech</span>
-                <span class="hidden xs:inline text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-md bg-teal-500/10 text-teal-600 dark:text-teal-400 font-mono font-bold border border-teal-500/30">STUDIO</span>
-                <span class="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-mono font-extrabold border border-emerald-500/30">v2.0 📱</span>
+            <div class="flex items-baseline space-x-1.5">
+              <span class="font-display text-xs sm:text-base font-bold tracking-tight text-[#F5F5F2] whitespace-nowrap">
+                CivilMech <span class="text-[#D63A2F] font-mono text-xs font-bold">STUDIO v2.0 📱</span>
               </span>
             </div>
-            <div class="text-[9px] sm:text-[10px] text-teal-600 dark:text-teal-400 font-semibold truncate flex items-center space-x-1 max-w-[175px] sm:max-w-none">
-              <i class="fa-solid fa-user-graduate text-[8px] sm:text-[9px] shrink-0"></i>
+            <div class="text-[9px] sm:text-[10px] text-[#A8AEB7] font-medium truncate flex items-center space-x-1 max-w-[185px] sm:max-w-none">
+              <i class="fa-solid fa-graduation-cap text-[9px] text-[#D63A2F] shrink-0"></i>
               <span class="truncate" data-i18n="headerDevCredit">พัฒนาโดย: นาย ธนัตถ์ วงษ์อุ่น (ECE2NR68)</span>
             </div>
           </div>
         </div>
 
-        <!-- 3. Right Global Controls (Placed on Row 1 right on mobile, far right on desktop) -->
-        <div class="flex items-center space-x-1 sm:space-x-1.5 shrink-0 order-2 lg:order-3">
+        <!-- 3. Right Global Controls (Mobile row 1 right, Desktop far right) -->
+        <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0 order-2 lg:order-3">
           
           <!-- AI Modeler -->
           <button onclick="openAIModal()" 
-                  class="px-2 sm:px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-teal-500/10 to-sky-500/10 hover:from-teal-500/20 hover:to-sky-500/20 text-teal-700 dark:text-teal-300 border border-teal-500/30 text-xs font-semibold transition flex items-center space-x-1"
+                  class="px-2 sm:px-2.5 py-1 rounded-sm bg-transparent hover:bg-[#2A2F37] text-[#E5E7EB] border border-[#383E48] text-xs font-medium transition flex items-center space-x-1"
                   title="AI Modeler for Beam & 2D Modeling">
-            <i class="fa-solid fa-wand-magic-sparkles text-teal-500 text-xs"></i>
+            <i class="fa-solid fa-wand-magic-sparkles text-[#D63A2F] text-xs"></i>
             <span class="hidden xl:inline text-[11px]" data-i18n="btnAIModeler">AI Modeler</span>
           </button>
 
           <!-- Project Folders -->
           <button onclick="openProjectManagerModal()" 
-                  class="px-2 sm:px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-semibold transition flex items-center space-x-1"
+                  class="px-2 sm:px-2.5 py-1 rounded-sm bg-transparent hover:bg-[#2A2F37] text-[#E5E7EB] border border-[#383E48] text-xs font-medium transition flex items-center space-x-1"
                   title="Project Folders & Checkpoints">
             <i class="fa-solid fa-folder-tree text-amber-500 text-xs"></i>
             <span class="hidden xl:inline text-[11px]" data-i18n="btnProjects">โปรเจกต์</span>
           </button>
 
-          <!-- Language Switcher -->
-          <div class="inline-flex rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 border border-slate-200 dark:border-slate-700 text-[10px] sm:text-[11px] font-semibold">
-            <button id="btnLangTH" onclick="setLanguage('th')" class="px-1.5 sm:px-2 py-0.5 rounded-md transition-all bg-sky-600 text-white shadow-2xs">TH</button>
-            <button id="btnLangEN" onclick="setLanguage('en')" class="px-1.5 sm:px-2 py-0.5 rounded-md transition-all text-slate-600 dark:text-slate-400">EN</button>
+          <!-- Language Switcher Chips -->
+          <div class="inline-flex rounded-sm border border-[#383E48] text-[10px] sm:text-[11px] font-mono overflow-hidden">
+            <button id="btnLangTH" onclick="setLanguage('th')" class="px-2 py-0.5 bg-[#D63A2F] text-white font-bold transition">TH</button>
+            <button id="btnLangEN" onclick="setLanguage('en')" class="px-2 py-0.5 text-[#A8AEB7] hover:text-white transition">EN</button>
           </div>
 
-          <!-- Units Switcher -->
-          <div class="inline-flex rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 border border-slate-200 dark:border-slate-700 text-[10px] sm:text-[11px] font-semibold">
-            <button id="btnMetric" onclick="setUnits('metric')" class="px-1.5 sm:px-2 py-0.5 rounded-md transition-all bg-sky-600 text-white shadow-2xs">SI</button>
-            <button id="btnImperial" onclick="setUnits('imperial')" class="px-1.5 sm:px-2 py-0.5 rounded-md transition-all text-slate-600 dark:text-slate-400">Imp</button>
+          <!-- Units Switcher Chips -->
+          <div class="inline-flex rounded-sm border border-[#383E48] text-[10px] sm:text-[11px] font-mono overflow-hidden">
+            <button id="btnMetric" onclick="setUnits('metric')" class="px-2 py-0.5 bg-[#D63A2F] text-white font-bold transition">SI</button>
+            <button id="btnImperial" onclick="setUnits('imperial')" class="px-2 py-0.5 text-[#A8AEB7] hover:text-white transition">Imp</button>
           </div>
 
           <!-- Dark/Light Theme Toggle -->
-          <button id="themeToggleBtn" onclick="toggleTheme()" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-50 dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-slate-700 text-amber-500 dark:text-yellow-200 border border-amber-200 dark:border-slate-700 flex items-center justify-center transition shrink-0" title="สลับโหมดมืด/สว่าง">
+          <button id="themeToggleBtn" onclick="toggleTheme()" class="w-7 h-7 sm:w-8 sm:h-8 rounded-sm border border-[#383E48] hover:border-white text-[#E5E7EB] flex items-center justify-center transition shrink-0" title="สลับโหมดมืด/สว่าง">
             <i id="themeIcon" class="fa-solid fa-moon text-xs"></i>
           </button>
         </div>
 
-        <!-- 2. Center Workspace Navigation Tabs (Full-width scrollable bar on mobile, centered pill bar on desktop) -->
-        <nav class="w-full lg:w-auto order-3 lg:order-2 flex items-center bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl border border-slate-200 dark:border-slate-700/80 overflow-x-auto max-w-full shrink preset-scroll-bar">
+        <!-- 2. Center Workspace Navigation Tabs -->
+        <nav class="w-full lg:w-auto order-3 lg:order-2 flex items-center border border-[#2A2F37] rounded-sm bg-[#111316] overflow-x-auto max-w-full shrink preset-scroll-bar h-8 lg:h-9">
           <button onclick="switchWorkspace('1d')" id="navTab1D"
-                  class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 whitespace-nowrap bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-2xs">
-            <i class="fa-solid fa-ruler-horizontal"></i>
-            <span data-i18n="nav1DBeam">1D คำนวณคาน</span>
+                  class="h-full px-3 text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap bg-[var(--cm-bg)] text-[#16191D] dark:text-white border-r border-[#2A2F37]">
+            <i class="fa-solid fa-ruler-horizontal text-[#D63A2F]"></i>
+            <span data-i18n="nav1DBeam">01 · 1D คาน</span>
           </button>
           <button onclick="switchWorkspace('2d')" id="navTab2D"
-                  class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 whitespace-nowrap text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
-            <i class="fa-solid fa-draw-polygon text-teal-500"></i>
-            <span data-i18n="nav2DFrame">2D โครงข้อแข็ง &amp; ถัก</span>
+                  class="h-full px-3 text-xs font-medium text-[#A8AEB7] hover:text-white transition-all flex items-center space-x-1.5 whitespace-nowrap border-r border-[#2A2F37]">
+            <i class="fa-solid fa-draw-polygon"></i>
+            <span data-i18n="nav2DFrame">02 · 2D เฟรม</span>
           </button>
           <button onclick="switchWorkspace('3d')" id="navTab3D"
-                  class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 whitespace-nowrap text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
-            <i class="fa-solid fa-cube text-indigo-500"></i>
-            <span data-i18n="nav3DViewer">3D โมเดล</span>
+                  class="h-full px-3 text-xs font-medium text-[#A8AEB7] hover:text-white transition-all flex items-center space-x-1.5 whitespace-nowrap border-r border-[#2A2F37]">
+            <i class="fa-solid fa-cube"></i>
+            <span data-i18n="nav3DViewer">03 · 3D โมเดล</span>
           </button>
           <button onclick="switchWorkspace('truss')" id="navTabTruss"
-                  class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 whitespace-nowrap text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
-            <i class="fa-solid fa-campground text-cyan-500"></i>
-            <span data-i18n="navTrussCalc">คำนวณโครงถัก (2D/3D)</span>
+                  class="h-full px-3 text-xs font-medium text-[#A8AEB7] hover:text-white transition-all flex items-center space-x-1.5 whitespace-nowrap border-r border-[#2A2F37]">
+            <i class="fa-solid fa-campground"></i>
+            <span data-i18n="navTrussCalc">04 · 2D/3D โครงถัก</span>
           </button>
           <button onclick="switchWorkspace('section')" id="navTabSection"
-                  class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 whitespace-nowrap text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
-            <i class="fa-solid fa-shapes text-amber-500"></i>
-            <span data-i18n="navSectionBuilder">สร้างหน้าตัด</span>
+                  class="h-full px-3 text-xs font-medium text-[#A8AEB7] hover:text-white transition-all flex items-center space-x-1.5 whitespace-nowrap border-r border-[#2A2F37]">
+            <i class="fa-solid fa-shapes"></i>
+            <span data-i18n="navSectionBuilder">05 · หน้าตัด</span>
           </button>
           <button onclick="switchWorkspace('converters')" id="navTabConverters"
-                  class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 whitespace-nowrap text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
-            <i class="fa-solid fa-calculator text-emerald-500"></i>
-            <span data-i18n="navConverters">แปลงหน่วย &amp; ทฤษฎี</span>
+                  class="h-full px-3 text-xs font-medium text-[#A8AEB7] hover:text-white transition-all flex items-center space-x-1.5 whitespace-nowrap border-r border-[#2A2F37]">
+            <i class="fa-solid fa-calculator"></i>
+            <span data-i18n="navConverters">06 · แปลงหน่วย</span>
           </button>
           <button onclick="switchWorkspace('report')" id="navTabReport"
-                  class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 whitespace-nowrap text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
-            <i class="fa-solid fa-file-pdf text-rose-500"></i>
-            <span data-i18n="navCalcReport">รายงาน PDF</span>
+                  class="h-full px-3 text-xs font-medium text-[#A8AEB7] hover:text-white transition-all flex items-center space-x-1.5 whitespace-nowrap">
+            <i class="fa-solid fa-file-pdf text-[#D63A2F]"></i>
+            <span data-i18n="navCalcReport">07 · รายงาน PDF</span>
           </button>
         </nav>
 
@@ -420,7 +531,7 @@
         </div>
 
         <!-- Left Scroll Arrow Button -->
-        <button onclick="scrollBeamPresetBar(-250)" class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-sky-500 hover:text-white text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-700 transition shadow-2xs" title="เลื่อนดูแม่แบบไปทางซ้าย">
+        <button onclick="scrollBeamPresetBar(-250)" class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-sky-500 hover:text-white text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0 border border-[var(--cm-rule)] transition shadow-2xs" title="เลื่อนดูแม่แบบไปทางซ้าย">
           <i class="fa-solid fa-chevron-left text-[11px]"></i>
         </button>
 
@@ -433,10 +544,10 @@
           <button onclick="loadPreset('report_example_4718')" data-preset-key="report_example_4718" class="top-preset-btn px-2.5 py-1 bg-teal-500/15 hover:bg-teal-500/25 text-teal-700 dark:text-teal-300 rounded-md font-bold border border-teal-500/30 transition whitespace-nowrap shrink-0">
             ★ 4718-28th-SEC-D (MK2 SOLDIER)
           </button>
-          <button onclick="loadPreset('simply_supported_point')" data-preset-key="simply_supported_point" class="top-preset-btn px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-sky-950/60 text-slate-700 dark:text-slate-300 rounded-md font-medium border border-slate-200 dark:border-slate-700 transition whitespace-nowrap shrink-0" data-i18n="preset_ss_point">
+          <button onclick="loadPreset('simply_supported_point')" data-preset-key="simply_supported_point" class="top-preset-btn px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-sky-950/60 text-slate-700 dark:text-slate-300 rounded-md font-medium border border-[var(--cm-rule)] transition whitespace-nowrap shrink-0" data-i18n="preset_ss_point">
             คานช่วงเดี่ยว (แรงจุดกึ่งกลาง)
           </button>
-          <button onclick="loadPreset('simply_supported_udl')" data-preset-key="simply_supported_udl" class="top-preset-btn px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-sky-950/60 text-slate-700 dark:text-slate-300 rounded-md font-medium border border-slate-200 dark:border-slate-700 transition whitespace-nowrap shrink-0" data-i18n="preset_ss_udl">
+          <button onclick="loadPreset('simply_supported_udl')" data-preset-key="simply_supported_udl" class="top-preset-btn px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-sky-950/60 text-slate-700 dark:text-slate-300 rounded-md font-medium border border-[var(--cm-rule)] transition whitespace-nowrap shrink-0" data-i18n="preset_ss_udl">
             คานช่วงเดี่ยว (แรงกระจาย UDL)
           </button>
           <button onclick="loadPreset('triangular_load_increasing')" data-preset-key="triangular_load_increasing" class="top-preset-btn px-2.5 py-1 bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 rounded-md font-semibold border border-amber-500/30 transition whitespace-nowrap shrink-0">
@@ -445,22 +556,22 @@
           <button onclick="loadPreset('trapezoidal_load')" data-preset-key="trapezoidal_load" class="top-preset-btn px-2.5 py-1 bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 rounded-md font-semibold border border-amber-500/30 transition whitespace-nowrap shrink-0">
             <i class="fa-solid fa-draw-polygon text-[10px] mr-1"></i><span data-i18n="preset_trapezoidal">แรงแผ่คางหมู (w₁→w₂)</span>
           </button>
-          <button onclick="loadPreset('cantilever_point')" data-preset-key="cantilever_point" class="top-preset-btn px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-sky-950/60 text-slate-700 dark:text-slate-300 rounded-md font-medium border border-slate-200 dark:border-slate-700 transition whitespace-nowrap shrink-0" data-i18n="preset_cantilever">
+          <button onclick="loadPreset('cantilever_point')" data-preset-key="cantilever_point" class="top-preset-btn px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-sky-950/60 text-slate-700 dark:text-slate-300 rounded-md font-medium border border-[var(--cm-rule)] transition whitespace-nowrap shrink-0" data-i18n="preset_cantilever">
             คานยื่น Cantilever
           </button>
-          <button onclick="loadPreset('fixed_fixed_udl')" data-preset-key="fixed_fixed_udl" class="top-preset-btn px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-sky-950/60 text-slate-700 dark:text-slate-300 rounded-md font-medium border border-slate-200 dark:border-slate-700 transition whitespace-nowrap shrink-0" data-i18n="preset_fixed_fixed">
+          <button onclick="loadPreset('fixed_fixed_udl')" data-preset-key="fixed_fixed_udl" class="top-preset-btn px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-sky-950/60 text-slate-700 dark:text-slate-300 rounded-md font-medium border border-[var(--cm-rule)] transition whitespace-nowrap shrink-0" data-i18n="preset_fixed_fixed">
             คานยึดแน่น 2 ข้าง (Fixed-Fixed)
           </button>
-          <button onclick="loadPreset('continuous_two_span')" data-preset-key="continuous_two_span" class="top-preset-btn px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-sky-950/60 text-slate-700 dark:text-slate-300 rounded-md font-medium border border-slate-200 dark:border-slate-700 transition whitespace-nowrap shrink-0" data-i18n="preset_continuous">
+          <button onclick="loadPreset('continuous_two_span')" data-preset-key="continuous_two_span" class="top-preset-btn px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-sky-950/60 text-slate-700 dark:text-slate-300 rounded-md font-medium border border-[var(--cm-rule)] transition whitespace-nowrap shrink-0" data-i18n="preset_continuous">
             คานต่อเนื่อง 2 ช่วง (2-Span)
           </button>
-          <button onclick="loadPreset('overhanging_beam')" data-preset-key="overhanging_beam" class="top-preset-btn px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-sky-950/60 text-slate-700 dark:text-slate-300 rounded-md font-medium border border-slate-200 dark:border-slate-700 transition whitespace-nowrap shrink-0" data-i18n="preset_overhang">
+          <button onclick="loadPreset('overhanging_beam')" data-preset-key="overhanging_beam" class="top-preset-btn px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-sky-950/60 text-slate-700 dark:text-slate-300 rounded-md font-medium border border-[var(--cm-rule)] transition whitespace-nowrap shrink-0" data-i18n="preset_overhang">
             คานมีปลายยื่น (Overhanging)
           </button>
         </div>
 
         <!-- Right Scroll Arrow Button -->
-        <button onclick="scrollBeamPresetBar(250)" class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-sky-500 hover:text-white text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-700 transition shadow-2xs" title="เลื่อนดูแม่แบบไปทางขวา">
+        <button onclick="scrollBeamPresetBar(250)" class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-sky-500 hover:text-white text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0 border border-[var(--cm-rule)] transition shadow-2xs" title="เลื่อนดูแม่แบบไปทางขวา">
           <i class="fa-solid fa-chevron-right text-[11px]"></i>
         </button>
 
@@ -494,7 +605,7 @@
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 xl:grid-cols-9 gap-2.5">
           
           <!-- Card 1: 4718 MK2 Soldier -->
-          <div onclick="loadPreset('report_example_4718')" data-preset-key="report_example_4718" class="beam-preset-card group p-2 rounded-xl border border-teal-500/40 bg-white dark:bg-slate-800/80 hover:border-teal-500 hover:shadow-md cursor-pointer transition flex flex-col justify-between">
+          <div onclick="loadPreset('report_example_4718')" data-preset-key="report_example_4718" class="beam-preset-card group p-2 rounded-sm border border-teal-500/40 bg-white dark:bg-slate-800/80 hover:border-teal-500 hover:shadow-md cursor-pointer transition flex flex-col justify-between">
             <div>
               <div class="flex items-center justify-between text-[10px] mb-1">
                 <span class="font-bold text-teal-600 dark:text-teal-400">★ 4718 SOLDIER</span>
@@ -522,7 +633,7 @@
           </div>
 
           <!-- Card 2: Simply Supported Mid Point -->
-          <div onclick="loadPreset('simply_supported_point')" data-preset-key="simply_supported_point" class="beam-preset-card group p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 hover:border-sky-500 hover:shadow-md cursor-pointer transition flex flex-col justify-between">
+          <div onclick="loadPreset('simply_supported_point')" data-preset-key="simply_supported_point" class="beam-preset-card group p-2 rounded-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 hover:border-sky-500 hover:shadow-md cursor-pointer transition flex flex-col justify-between">
             <div>
               <div class="flex items-center justify-between text-[10px] mb-1">
                 <span class="font-bold text-slate-700 dark:text-slate-300" data-i18n="vb2Title">คานเดี่ยว + P กลาง</span>
@@ -548,7 +659,7 @@
           </div>
 
           <!-- Card 3: Simply Supported Full UDL -->
-          <div onclick="loadPreset('simply_supported_udl')" data-preset-key="simply_supported_udl" class="beam-preset-card group p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 hover:border-sky-500 hover:shadow-md cursor-pointer transition flex flex-col justify-between">
+          <div onclick="loadPreset('simply_supported_udl')" data-preset-key="simply_supported_udl" class="beam-preset-card group p-2 rounded-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 hover:border-sky-500 hover:shadow-md cursor-pointer transition flex flex-col justify-between">
             <div>
               <div class="flex items-center justify-between text-[10px] mb-1">
                 <span class="font-bold text-slate-700 dark:text-slate-300" data-i18n="vb3Title">คานเดี่ยว + UDL</span>
@@ -574,7 +685,7 @@
           </div>
 
           <!-- Card 4: Triangular Load Ramp (0 to w) -->
-          <div onclick="loadPreset('triangular_load_increasing')" data-preset-key="triangular_load_increasing" class="beam-preset-card group p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 hover:border-amber-500 hover:shadow-md cursor-pointer transition flex flex-col justify-between">
+          <div onclick="loadPreset('triangular_load_increasing')" data-preset-key="triangular_load_increasing" class="beam-preset-card group p-2 rounded-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 hover:border-amber-500 hover:shadow-md cursor-pointer transition flex flex-col justify-between">
             <div>
               <div class="flex items-center justify-between text-[10px] mb-1">
                 <span class="font-bold text-amber-600 dark:text-amber-400" data-i18n="vb4Title">สามเหลี่ยม (เริ่มจาก 0)</span>
@@ -600,7 +711,7 @@
           </div>
 
           <!-- Card 5: Trapezoidal Load -->
-          <div onclick="loadPreset('trapezoidal_load')" data-preset-key="trapezoidal_load" class="beam-preset-card group p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 hover:border-amber-500 hover:shadow-md cursor-pointer transition flex flex-col justify-between">
+          <div onclick="loadPreset('trapezoidal_load')" data-preset-key="trapezoidal_load" class="beam-preset-card group p-2 rounded-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 hover:border-amber-500 hover:shadow-md cursor-pointer transition flex flex-col justify-between">
             <div>
               <div class="flex items-center justify-between text-[10px] mb-1">
                 <span class="font-bold text-amber-600 dark:text-amber-400" data-i18n="vb5Title">คางหมู (w₁→w₂)</span>
@@ -626,7 +737,7 @@
           </div>
 
           <!-- Card 6: Cantilever Beam -->
-          <div onclick="loadPreset('cantilever_point')" data-preset-key="cantilever_point" class="beam-preset-card group p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 hover:border-sky-500 hover:shadow-md cursor-pointer transition flex flex-col justify-between">
+          <div onclick="loadPreset('cantilever_point')" data-preset-key="cantilever_point" class="beam-preset-card group p-2 rounded-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 hover:border-sky-500 hover:shadow-md cursor-pointer transition flex flex-col justify-between">
             <div>
               <div class="flex items-center justify-between text-[10px] mb-1">
                 <span class="font-bold text-slate-700 dark:text-slate-300" data-i18n="vb6Title">คานยื่น Cantilever</span>
@@ -651,7 +762,7 @@
           </div>
 
           <!-- Card 7: Fixed-Fixed Beam -->
-          <div onclick="loadPreset('fixed_fixed_udl')" data-preset-key="fixed_fixed_udl" class="beam-preset-card group p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 hover:border-sky-500 hover:shadow-md cursor-pointer transition flex flex-col justify-between">
+          <div onclick="loadPreset('fixed_fixed_udl')" data-preset-key="fixed_fixed_udl" class="beam-preset-card group p-2 rounded-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 hover:border-sky-500 hover:shadow-md cursor-pointer transition flex flex-col justify-between">
             <div>
               <div class="flex items-center justify-between text-[10px] mb-1">
                 <span class="font-bold text-slate-700 dark:text-slate-300" data-i18n="vb7Title">ยึดแน่น 2 ข้าง</span>
@@ -678,7 +789,7 @@
           </div>
 
           <!-- Card 8: Continuous 2-Span -->
-          <div onclick="loadPreset('continuous_two_span')" data-preset-key="continuous_two_span" class="beam-preset-card group p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 hover:border-sky-500 hover:shadow-md cursor-pointer transition flex flex-col justify-between">
+          <div onclick="loadPreset('continuous_two_span')" data-preset-key="continuous_two_span" class="beam-preset-card group p-2 rounded-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 hover:border-sky-500 hover:shadow-md cursor-pointer transition flex flex-col justify-between">
             <div>
               <div class="flex items-center justify-between text-[10px] mb-1">
                 <span class="font-bold text-slate-700 dark:text-slate-300" data-i18n="vb8Title">คานต่อเนื่อง 2 ช่วง</span>
@@ -704,7 +815,7 @@
           </div>
 
           <!-- Card 9: Overhanging Beam -->
-          <div onclick="loadPreset('overhanging_beam')" data-preset-key="overhanging_beam" class="beam-preset-card group p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 hover:border-sky-500 hover:shadow-md cursor-pointer transition flex flex-col justify-between">
+          <div onclick="loadPreset('overhanging_beam')" data-preset-key="overhanging_beam" class="beam-preset-card group p-2 rounded-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 hover:border-sky-500 hover:shadow-md cursor-pointer transition flex flex-col justify-between">
             <div>
               <div class="flex items-center justify-between text-[10px] mb-1">
                 <span class="font-bold text-slate-700 dark:text-slate-300" data-i18n="vb9Title">คานมีปลายยื่น</span>
@@ -739,7 +850,7 @@
       <div class="lg:col-span-4 space-y-4">
         
         <!-- Geometry & Section Card -->
-        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xs border border-slate-200/90 dark:border-slate-800 p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-sm shadow-xs border border-[var(--cm-rule)] p-4">
           <div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100 dark:border-slate-800">
             <div class="flex items-center space-x-2">
               <div class="w-7 h-7 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center">
@@ -756,7 +867,7 @@
 
           <!-- Section Mode Switcher: Use Cross-Section vs Ignore Cross-Section (Homework Mode) -->
           <div class="mb-3">
-            <div class="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 text-xs">
+            <div class="grid grid-cols-2 gap-1.5 p-1 rounded-sm bg-slate-100 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 text-xs">
               <button type="button" id="btnSecModeUse" onclick="setIgnoreSectionMode(false)"
                       class="py-1.5 px-2 rounded-lg font-bold transition-all flex items-center justify-center space-x-1.5 bg-sky-600 text-white shadow-2xs cursor-pointer">
                 <i class="fa-solid fa-shapes text-[11px]"></i>
@@ -771,7 +882,7 @@
           </div>
 
           <!-- Active Banner when Ignore Section (Homework Mode) is ON -->
-          <div id="noSectionModeBanner" class="hidden mb-3 p-2.5 rounded-xl bg-emerald-500/10 dark:bg-emerald-950/40 border border-emerald-500/30 text-xs space-y-1">
+          <div id="noSectionModeBanner" class="hidden mb-3 p-2.5 rounded-sm bg-emerald-500/10 dark:bg-emerald-950/40 border border-emerald-500/30 text-xs space-y-1">
             <div class="flex items-center space-x-1.5 font-bold text-emerald-700 dark:text-emerald-300">
               <i class="fa-solid fa-circle-check text-emerald-500"></i>
               <span data-i18n="noSecBannerTitle">โหมดไม่คิดหน้าตัด (EI คงที่ • ตามโจทย์การบ้าน)</span>
@@ -804,7 +915,7 @@
                 <i class="fa-solid fa-plus text-[10px]"></i>
                 <span>สร้างหน้าตัดใหม่เข้า 1D</span>
               </button>
-              <button type="button" onclick="switchWorkspace('sections')" class="py-1 px-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-semibold text-[11px] flex items-center justify-center space-x-1 transition shadow-2xs">
+              <button type="button" onclick="switchWorkspace('sections')" class="py-1 px-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-[var(--cm-rule)] font-semibold text-[11px] flex items-center justify-center space-x-1 transition shadow-2xs">
                 <i class="fa-solid fa-shapes text-[10px]"></i>
                 <span>เปิดคลังหน้าตัด</span>
               </button>
@@ -812,7 +923,7 @@
           </div>
 
           <!-- Mini 2D Cross-Section Preview -->
-          <div id="sectionPreviewBox" class="grid grid-cols-12 gap-3 mb-3 bg-slate-50 dark:bg-slate-950/70 p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800 items-center transition-opacity">
+          <div id="sectionPreviewBox" class="grid grid-cols-12 gap-3 mb-3 bg-slate-50 dark:bg-slate-950/70 p-2.5 rounded-sm border border-slate-200/80 dark:border-slate-800 items-center transition-opacity">
             <div class="col-span-5 flex justify-center">
               <canvas id="sectionCanvas" width="100" height="100" class="rounded-lg bg-slate-900 border border-slate-800"></canvas>
             </div>
@@ -862,7 +973,7 @@
         </div>
 
         <!-- Supports Card -->
-        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xs border border-slate-200/90 dark:border-slate-800 p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-sm shadow-xs border border-[var(--cm-rule)] p-4">
           <div class="flex items-center justify-between pb-2.5 mb-3 border-b border-slate-100 dark:border-slate-800">
             <div class="flex items-center space-x-2">
               <div class="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
@@ -873,7 +984,7 @@
             <span id="supportCountBadge" class="text-[11px] bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-semibold px-2 py-0.5 rounded-full">3 จุด</span>
           </div>
 
-          <div class="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-700/70 mb-3">
+          <div class="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-sm border border-slate-200/80 dark:border-slate-700/70 mb-3">
             <div class="grid grid-cols-12 gap-2 items-end">
               <div class="col-span-6">
                 <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1" data-i18n="supportTypeLabel">ชนิดจุดรองรับ</label>
@@ -895,7 +1006,7 @@
             </div>
           </div>
 
-          <div class="overflow-hidden border border-slate-200 dark:border-slate-800 rounded-xl">
+          <div class="overflow-hidden border border-slate-200 dark:border-slate-800 rounded-sm">
             <table class="w-full text-left text-xs">
               <thead class="bg-slate-100/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 uppercase text-[10px]">
                 <tr>
@@ -910,7 +1021,7 @@
         </div>
 
         <!-- Applied Loads Card -->
-        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xs border border-slate-200/90 dark:border-slate-800 p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-sm shadow-xs border border-[var(--cm-rule)] p-4">
           <div class="flex items-center justify-between pb-2.5 mb-3 border-b border-slate-100 dark:border-slate-800">
             <div class="flex items-center space-x-2">
               <div class="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center">
@@ -921,13 +1032,13 @@
             <span id="loadCountBadge" class="text-[11px] bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 font-semibold px-2 py-0.5 rounded-full">3 รายการ</span>
           </div>
 
-          <div class="flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 mb-2.5 text-xs font-medium">
+          <div class="flex rounded-sm bg-slate-100 dark:bg-slate-800 p-1 mb-2.5 text-xs font-medium">
             <button id="tabLoadPoint" onclick="setLoadTab('point')" class="flex-1 py-1 rounded-lg bg-white dark:bg-slate-900 shadow-2xs text-slate-900 dark:text-white font-semibold" data-i18n="tabPointLoad">แรงจุด (Point)</button>
             <button id="tabLoadUDL" onclick="setLoadTab('udl')" class="flex-1 py-1 rounded-lg text-slate-600 dark:text-slate-400" data-i18n="tabUDLLoad">แรงกระจาย (UDL)</button>
             <button id="tabLoadMoment" onclick="setLoadTab('moment')" class="flex-1 py-1 rounded-lg text-slate-600 dark:text-slate-400" data-i18n="tabMomentLoad">โมเมนต์ (Moment)</button>
           </div>
 
-          <div class="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-700/70 mb-3">
+          <div class="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-sm border border-slate-200/80 dark:border-slate-700/70 mb-3">
             <div id="formPointLoad" class="grid grid-cols-2 gap-2 text-xs">
               <div>
                 <label class="block text-[11px] font-medium mb-1"><span data-i18n="loadMagP">ขนาดแรง P</span> (<span class="unit-force">kN</span>)</label>
@@ -948,7 +1059,7 @@
 
             <div id="formUDLLoad" class="grid grid-cols-2 gap-2 text-xs hidden">
               <!-- Quick Shape Helpers -->
-              <div class="col-span-2 flex items-center justify-between gap-1 pb-1 border-b border-slate-200 dark:border-slate-700 text-[10px]">
+              <div class="col-span-2 flex items-center justify-between gap-1 pb-1 border-b border-[var(--cm-rule)] text-[10px]">
                 <span class="font-bold text-slate-500" data-i18n="lblUDLShape">รูปแบบ:</span>
                 <button type="button" onclick="setUDLPreset('tri_increasing')" class="px-1.5 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 font-semibold" data-i18n="btnUDLTriInc">สามเหลี่ยม 0→w₂</button>
                 <button type="button" onclick="setUDLPreset('tri_decreasing')" class="px-1.5 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 font-semibold" data-i18n="btnUDLTriDec">สามเหลี่ยม w₁→0</button>
@@ -999,7 +1110,7 @@
             </div>
           </div>
 
-          <div class="overflow-hidden border border-slate-200 dark:border-slate-800 rounded-xl max-h-48 overflow-y-auto">
+          <div class="overflow-hidden border border-slate-200 dark:border-slate-800 rounded-sm max-h-48 overflow-y-auto">
             <table class="w-full text-left text-xs">
               <thead class="bg-slate-100/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 uppercase text-[10px] sticky top-0">
                 <tr>
@@ -1020,7 +1131,7 @@
       <div class="lg:col-span-8 space-y-4">
         
         <!-- Interactive 1D Beam Schematic & FBD -->
-        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xs border border-slate-200/90 dark:border-slate-800 p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-sm shadow-xs border border-[var(--cm-rule)] p-4">
           <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
             <div class="flex items-center space-x-2">
               <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -1043,7 +1154,7 @@
             </div>
           </div>
 
-          <div class="relative w-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+          <div class="relative w-full rounded-sm overflow-hidden border border-slate-200 dark:border-slate-800">
             <canvas id="beamCanvas" class="w-full h-60 block cursor-crosshair"></canvas>
           </div>
 
@@ -1068,46 +1179,46 @@
         </div>
 
         <!-- Executive KPI Summary Cards -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div class="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200/90 dark:border-slate-800">
-            <div class="text-[10px] uppercase font-bold text-slate-500 mb-1 flex justify-between">
+        <div class="grid grid-cols-2 sm:grid-cols-4 border border-[var(--cm-rule)] divide-x divide-y sm:divide-y-0 divide-[var(--cm-rule)] bg-[var(--cm-panel)]">
+          <div class="p-3 bg-[var(--cm-surface)]">
+            <div class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 flex justify-between">
               <span data-i18n="cardMaxV">แรงเฉือนสูงสุด |V|</span>
-              <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+              <span class="w-2 h-2 rounded-none bg-[#D63A2F]"></span>
             </div>
-            <div class="font-mono text-base font-extrabold text-slate-900 dark:text-white" id="valMaxV">28.58 kN</div>
-            <div class="text-[10px] text-slate-500 font-mono mt-0.5" id="valMaxVLoc">@ x = 1.85 m</div>
+            <div class="font-mono text-base font-extrabold text-[#D63A2F] dark:text-[#E54D42]" id="valMaxV">28.58 kN</div>
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5" id="valMaxVLoc">@ x = 1.85 m</div>
           </div>
 
-          <div class="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200/90 dark:border-slate-800">
-            <div class="text-[10px] uppercase font-bold text-slate-500 mb-1 flex justify-between">
+          <div class="p-3 bg-[var(--cm-surface)]">
+            <div class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 flex justify-between">
               <span data-i18n="cardMaxM">โมเมนต์ดัดสูงสุด |M|</span>
-              <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+              <span class="w-2 h-2 rounded-none bg-[#1D4E89]"></span>
             </div>
-            <div class="font-mono text-base font-extrabold text-slate-900 dark:text-white" id="valMaxM">11.31 kN·m</div>
-            <div class="text-[10px] text-slate-500 font-mono mt-0.5" id="valMaxMLoc">@ x = 1.85 m</div>
+            <div class="font-mono text-base font-extrabold text-[#1D4E89] dark:text-[#5B9BD5]" id="valMaxM">11.31 kN·m</div>
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5" id="valMaxMLoc">@ x = 1.85 m</div>
           </div>
 
-          <div class="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200/90 dark:border-slate-800">
-            <div class="text-[10px] uppercase font-bold text-slate-500 mb-1 flex justify-between">
+          <div class="p-3 bg-[var(--cm-surface)]">
+            <div class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 flex justify-between">
               <span id="lblCardMaxSlope" data-i18n="cardMaxSlope">มุมลาดชันสูงสุด |θ|</span>
-              <span class="w-2 h-2 rounded-full bg-teal-500"></span>
+              <span class="w-2 h-2 rounded-none bg-[#146C43]"></span>
             </div>
-            <div class="font-mono text-base font-extrabold text-teal-600 dark:text-teal-400" id="valMaxSlope">0.476 Deg</div>
-            <div class="text-[10px] text-slate-500 font-mono mt-0.5" id="valMaxSlopeLoc">@ x = 4.67 m</div>
+            <div class="font-mono text-base font-extrabold text-[#146C43] dark:text-[#34D399]" id="valMaxSlope">0.476 Deg</div>
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5" id="valMaxSlopeLoc">@ x = 4.67 m</div>
           </div>
 
-          <div class="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200/90 dark:border-slate-800">
-            <div class="text-[10px] uppercase font-bold text-slate-500 mb-1 flex justify-between">
+          <div class="p-3 bg-[var(--cm-surface)]">
+            <div class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 mb-1 flex justify-between">
               <span id="lblCardMaxDelta" data-i18n="cardMaxDelta">การแอ่นตัวสูงสุด |δ|</span>
-              <span id="serviceabilityBadge" class="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-emerald-500/15 text-emerald-500">PASS</span>
+              <span id="serviceabilityBadge" class="px-1.5 py-0.2 rounded-none text-[9px] font-mono font-bold bg-emerald-500/15 text-emerald-500">PASS</span>
             </div>
             <div class="font-mono text-base font-extrabold text-rose-600 dark:text-rose-400" id="valMaxDelta">-7.319 mm</div>
-            <div class="text-[10px] text-slate-500 font-mono mt-0.5" id="valMaxDeltaLoc">@ x = 3.42 m</div>
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5" id="valMaxDeltaLoc">@ x = 3.42 m</div>
           </div>
         </div>
 
         <!-- Support Reactions Box -->
-        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xs border border-slate-200/90 dark:border-slate-800 p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-sm shadow-xs border border-[var(--cm-rule)] p-4">
           <div class="flex items-center justify-between mb-2.5 pb-1.5 border-b border-slate-100 dark:border-slate-800">
             <h4 class="text-xs font-display font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center">
               <i class="fa-solid fa-scale-balanced text-indigo-500 mr-2"></i>
@@ -1119,12 +1230,12 @@
         </div>
 
         <!-- Synchronized 5-Diagram Suite -->
-        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xs border border-slate-200/90 dark:border-slate-800 p-4 space-y-4">
+        <div class="bg-white dark:bg-slate-900 rounded-sm shadow-xs border border-[var(--cm-rule)] p-4 space-y-4">
           <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-2.5">
             <span id="diagramsSuiteHeaderTitle" class="font-display font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-200">
               Shear, Moment, Slope, Deflection &amp; Stress Diagrams
             </span>
-            <div id="probeHud" class="flex flex-wrap items-center gap-x-2.5 text-[11px] bg-slate-900 dark:bg-slate-950 text-white px-3 py-1 rounded-xl font-mono border border-slate-700">
+            <div id="probeHud" class="flex flex-wrap items-center gap-x-2.5 text-[11px] bg-slate-900 dark:bg-slate-950 text-white px-3 py-1 rounded-sm font-mono border border-slate-700">
               <span class="text-sky-300">x:<strong id="probeX" class="ml-0.5">2.70</strong><span class="unit-len">m</span></span>
               <span class="text-slate-600">|</span>
               <span class="text-sky-400">V:<strong id="probeV" class="ml-0.5">0.00</strong><span class="unit-force">kN</span></span>
@@ -1144,7 +1255,7 @@
               <span class="text-sky-600 dark:text-sky-400">1. Shear Force Diagram — V(x) [<span class="unit-force">kN</span>]</span>
               <span class="font-mono text-[11px] text-slate-500" id="captionSFD"></span>
             </div>
-            <canvas id="canvasSFD" class="w-full h-36 block rounded-xl border border-slate-200 dark:border-slate-800 cursor-crosshair"></canvas>
+            <canvas id="canvasSFD" class="w-full h-36 block rounded-sm border border-slate-200 dark:border-slate-800 cursor-crosshair"></canvas>
           </div>
 
           <div>
@@ -1152,7 +1263,7 @@
               <span class="text-purple-600 dark:text-purple-400">2. Bending Moment Diagram — M(x) [<span class="unit-moment">kN·m</span>]</span>
               <span class="font-mono text-[11px] text-slate-500" id="captionBMD"></span>
             </div>
-            <canvas id="canvasBMD" class="w-full h-36 block rounded-xl border border-slate-200 dark:border-slate-800 cursor-crosshair"></canvas>
+            <canvas id="canvasBMD" class="w-full h-36 block rounded-sm border border-slate-200 dark:border-slate-800 cursor-crosshair"></canvas>
           </div>
 
           <div>
@@ -1160,7 +1271,7 @@
               <span id="titleDiagramSlope" class="text-teal-600 dark:text-teal-400">3. Slope / Rotation Diagram — θ(x) [Deg]</span>
               <span class="font-mono text-[11px] text-slate-500" id="captionSlope"></span>
             </div>
-            <canvas id="canvasSlope" class="w-full h-32 block rounded-xl border border-slate-200 dark:border-slate-800 cursor-crosshair"></canvas>
+            <canvas id="canvasSlope" class="w-full h-32 block rounded-sm border border-slate-200 dark:border-slate-800 cursor-crosshair"></canvas>
           </div>
 
           <div>
@@ -1168,7 +1279,7 @@
               <span id="titleDiagramDefl" class="text-rose-600 dark:text-rose-400">4. Elastic Deflection Diagram — δ(x) [<span class="unit-d">mm</span>]</span>
               <span class="font-mono text-[11px] text-slate-500" id="captionDefl"></span>
             </div>
-            <canvas id="canvasDefl" class="w-full h-36 block rounded-xl border border-slate-200 dark:border-slate-800 cursor-crosshair"></canvas>
+            <canvas id="canvasDefl" class="w-full h-36 block rounded-sm border border-slate-200 dark:border-slate-800 cursor-crosshair"></canvas>
           </div>
 
           <div id="diagramStressBlock">
@@ -1176,7 +1287,7 @@
               <span class="text-amber-600 dark:text-amber-400">5. Extreme Fiber Bending Stress — σ(x) [<span class="unit-stress">MPa</span>]</span>
               <span class="font-mono text-[11px] text-slate-500" id="captionStress"></span>
             </div>
-            <canvas id="canvasStress" class="w-full h-32 block rounded-xl border border-slate-200 dark:border-slate-800 cursor-crosshair"></canvas>
+            <canvas id="canvasStress" class="w-full h-32 block rounded-sm border border-slate-200 dark:border-slate-800 cursor-crosshair"></canvas>
           </div>
         </div>
 
@@ -5707,35 +5818,35 @@
   <!-- ===================================================================== -->
   <!-- MOBILE FIXED BOTTOM NAVIGATION BAR (Shown on screens < 768px)          -->
   <!-- ===================================================================== -->
-  <nav id="mobileBottomNav" class="md:hidden fixed bottom-0 inset-x-0 z-50 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 px-1 py-1 no-print shadow-[0_-8px_25px_rgba(0,0,0,0.45)]" style="padding-bottom: max(0.25rem, env(safe-area-inset-bottom));">
+  <nav id="mobileBottomNav" class="md:hidden fixed bottom-0 inset-x-0 z-50 bg-[#16191D]/95 text-[#F5F5F2] border-t-2 border-[#D63A2F] backdrop-blur-md px-1 py-1 no-print shadow-[0_-8px_25px_rgba(0,0,0,0.45)]" style="padding-bottom: max(0.25rem, env(safe-area-inset-bottom));">
     <div class="grid grid-cols-7 gap-0.5 max-w-md mx-auto">
-      <button onclick="switchWorkspace('1d')" id="mobNav1D" class="mob-bottom-item active flex flex-col items-center justify-center py-1.5 rounded-xl text-slate-400 transition">
+      <button onclick="switchWorkspace('1d')" id="mobNav1D" class="mob-bottom-item flex flex-col items-center justify-center py-1.5 rounded-sm text-[#D63A2F] bg-white/5 font-bold transition">
         <i class="fa-solid fa-ruler-horizontal text-xs mb-0.5"></i>
         <span class="text-[9px] font-bold leading-tight">1D คาน</span>
       </button>
-      <button onclick="switchWorkspace('2d')" id="mobNav2D" class="mob-bottom-item flex flex-col items-center justify-center py-1.5 rounded-xl text-slate-400 transition">
-        <i class="fa-solid fa-vector-square text-xs mb-0.5"></i>
-        <span class="text-[9px] font-bold leading-tight">2D เฟรม</span>
+      <button onclick="switchWorkspace('2d')" id="mobNav2D" class="mob-bottom-item flex flex-col items-center justify-center py-1.5 rounded-sm text-[#A8AEB7] hover:text-white transition">
+        <i class="fa-solid fa-draw-polygon text-xs mb-0.5"></i>
+        <span class="text-[9px] font-medium leading-tight">2D เฟรม</span>
       </button>
-      <button onclick="switchWorkspace('3d')" id="mobNav3D" class="mob-bottom-item flex flex-col items-center justify-center py-1.5 rounded-xl text-slate-400 transition">
+      <button onclick="switchWorkspace('3d')" id="mobNav3D" class="mob-bottom-item flex flex-col items-center justify-center py-1.5 rounded-sm text-[#A8AEB7] hover:text-white transition">
         <i class="fa-solid fa-cube text-xs mb-0.5"></i>
-        <span class="text-[9px] font-bold leading-tight">3D โมเดล</span>
+        <span class="text-[9px] font-medium leading-tight">3D โมเดล</span>
       </button>
-      <button onclick="switchWorkspace('truss')" id="mobNavTruss" class="mob-bottom-item flex flex-col items-center justify-center py-1.5 rounded-xl text-slate-400 transition">
+      <button onclick="switchWorkspace('truss')" id="mobNavTruss" class="mob-bottom-item flex flex-col items-center justify-center py-1.5 rounded-sm text-[#A8AEB7] hover:text-white transition">
         <i class="fa-solid fa-campground text-xs mb-0.5"></i>
-        <span class="text-[9px] font-bold leading-tight">ทรัสหลังคา</span>
+        <span class="text-[9px] font-medium leading-tight">โครงถัก</span>
       </button>
-      <button onclick="switchWorkspace('section')" id="mobNavSection" class="mob-bottom-item flex flex-col items-center justify-center py-1.5 rounded-xl text-slate-400 transition">
+      <button onclick="switchWorkspace('section')" id="mobNavSection" class="mob-bottom-item flex flex-col items-center justify-center py-1.5 rounded-sm text-[#A8AEB7] hover:text-white transition">
         <i class="fa-solid fa-shapes text-xs mb-0.5"></i>
-        <span class="text-[9px] font-bold leading-tight">หน้าตัด</span>
+        <span class="text-[9px] font-medium leading-tight">หน้าตัด</span>
       </button>
-      <button onclick="switchWorkspace('converters')" id="mobNavConverters" class="mob-bottom-item flex flex-col items-center justify-center py-1.5 rounded-xl text-slate-400 transition">
-        <i class="fa-solid fa-scale-balanced text-xs mb-0.5"></i>
-        <span class="text-[9px] font-bold leading-tight">แปลงหน่วย</span>
+      <button onclick="switchWorkspace('converters')" id="mobNavConverters" class="mob-bottom-item flex flex-col items-center justify-center py-1.5 rounded-sm text-[#A8AEB7] hover:text-white transition">
+        <i class="fa-solid fa-calculator text-xs mb-0.5"></i>
+        <span class="text-[9px] font-medium leading-tight">แปลงหน่วย</span>
       </button>
-      <button onclick="switchWorkspace('report')" id="mobNavReport" class="mob-bottom-item flex flex-col items-center justify-center py-1.5 rounded-xl text-slate-400 transition">
-        <i class="fa-solid fa-file-contract text-xs mb-0.5"></i>
-        <span class="text-[9px] font-bold leading-tight">รายงาน</span>
+      <button onclick="switchWorkspace('report')" id="mobNavReport" class="mob-bottom-item flex flex-col items-center justify-center py-1.5 rounded-sm text-[#A8AEB7] hover:text-white transition">
+        <i class="fa-solid fa-file-pdf text-[#D63A2F] text-xs mb-0.5"></i>
+        <span class="text-[9px] font-medium leading-tight">รายงาน</span>
       </button>
     </div>
   </nav>
@@ -5749,11 +5860,8 @@
     </div>
   </div>
 
-    <!-- ALL-IN-ONE BUNDLED JAVASCRIPT (CivilMech Studio Version 2.0 Final Single-File Edition) -->
+  <!-- MODULAR APPLICATION SCRIPTS (Final Unified Suite) -->
   <script>
-    /* =====================================================================
-     * PART 1: SOLVER 1D & GLOBAL STATE
-     * ===================================================================== */
 /*************************************************************************
  * GLOBAL STATE & BILINGUAL DICTIONARY (THAI / ENGLISH)
  *************************************************************************/
@@ -6132,9 +6240,9 @@ function switchWorkspace(ws) {
     if (s === ws) {
       secEl.classList.remove('hidden');
       secEl.classList.add('flex');
-      btnEl.className = 'px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 whitespace-nowrap bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-2xs';
+      btnEl.className = 'px-3 py-1.5 rounded-sm text-xs font-bold transition-all flex items-center space-x-1.5 whitespace-nowrap bg-[#16191D] text-white dark:bg-[#FAF9F6] dark:text-[#16191D] shadow-xs';
       if (mobBtnEl) {
-        mobBtnEl.className = 'flex-1 py-1.5 px-1 rounded-xl flex flex-col items-center justify-center text-[10px] font-bold bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/30 transition-all';
+        mobBtnEl.className = 'flex-1 py-1.5 px-1 rounded-sm flex flex-col items-center justify-center text-[10px] font-bold bg-[#D63A2F]/15 text-[#D63A2F] dark:text-[#E54D42] border border-[#D63A2F]/30 transition-all';
       }
     } else {
       secEl.classList.add('hidden');
@@ -6481,11 +6589,11 @@ function syncSectionModeUI() {
 
   if (btnUse && btnIgnore) {
     if (model.ignoreSection) {
-      btnIgnore.className = 'py-1.5 px-2 rounded-lg font-bold transition-all flex items-center justify-center space-x-1.5 bg-emerald-600 text-white shadow-2xs cursor-pointer';
-      btnUse.className = 'py-1.5 px-2 rounded-lg font-semibold transition-all flex items-center justify-center space-x-1.5 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer';
+      btnIgnore.className = 'py-1.5 px-2 rounded-sm font-bold transition-all flex items-center justify-center space-x-1.5 bg-[#146C43] text-white shadow-xs cursor-pointer';
+      btnUse.className = 'py-1.5 px-2 rounded-sm font-semibold transition-all flex items-center justify-center space-x-1.5 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer';
     } else {
-      btnUse.className = 'py-1.5 px-2 rounded-lg font-bold transition-all flex items-center justify-center space-x-1.5 bg-sky-600 text-white shadow-2xs cursor-pointer';
-      btnIgnore.className = 'py-1.5 px-2 rounded-lg font-semibold transition-all flex items-center justify-center space-x-1.5 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer';
+      btnUse.className = 'py-1.5 px-2 rounded-sm font-bold transition-all flex items-center justify-center space-x-1.5 bg-[#D63A2F] text-white shadow-xs cursor-pointer';
+      btnIgnore.className = 'py-1.5 px-2 rounded-sm font-semibold transition-all flex items-center justify-center space-x-1.5 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer';
     }
   }
 
@@ -7922,11 +8030,11 @@ function renderBeamSchematic() {
   const L = model.length;
   const xToPx = x => padL + (x / L) * plotW;
 
-  ctx.fillStyle = isDarkMode ? '#090f1d' : '#f8fafc';
+  ctx.fillStyle = isDarkMode ? '#1A1D22' : '#FAF9F6';
   ctx.fillRect(0, 0, W, H);
 
   // Subtle station grid lines
-  ctx.strokeStyle = isDarkMode ? '#1e293b' : '#e2e8f0';
+  ctx.strokeStyle = isDarkMode ? '#2D323B' : '#E2E2DC';
   ctx.lineWidth = 1;
   for (let x = 0; x <= L + 0.001; x += 0.5) {
     const px = xToPx(x);
@@ -7956,8 +8064,8 @@ function renderBeamSchematic() {
   }
 
   // Main Beam Bar
-  ctx.fillStyle = isDarkMode ? '#64748b' : '#737373';
-  ctx.strokeStyle = isDarkMode ? '#94a3b8' : '#525252';
+  ctx.fillStyle = isDarkMode ? '#2D323B' : '#16191D';
+  ctx.strokeStyle = isDarkMode ? '#E5E7EB' : '#16191D';
   ctx.lineWidth = 1.5;
   ctx.fillRect(padL, beamY - 7, plotW, 14);
   ctx.strokeRect(padL, beamY - 7, plotW, 14);
@@ -8198,14 +8306,12 @@ function renderBeamSchematic() {
 
   // Interactive Station Cursor Line
   const curPx = xToPx(hoveredBeamX);
-  ctx.strokeStyle = '#38bdf8';
-  ctx.lineWidth = 1.5;
-  ctx.setLineDash([4, 3]);
-  ctx.beginPath();
-  ctx.moveTo(curPx, 12);
-  ctx.lineTo(curPx, H - 12);
-  ctx.stroke();
-  ctx.setLineDash([]);
+  ctx.strokeStyle = isDarkMode ? '#E54D42' : '#D63A2F';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(curPx, 8);
+    ctx.lineTo(curPx, H - 8);
+    ctx.stroke();
 }
 
 function renderSingleDiagram(canvasId, key, colorHex, fillRgba, unitStr, extremaPos, extremaNeg, captionId, convFn = v => v) {
@@ -8226,7 +8332,8 @@ function renderSingleDiagram(canvasId, key, colorHex, fillRgba, unitStr, extrema
   const plotH = H - padT - padB;
   const L = model.length;
 
-  ctx.fillStyle = isDarkMode ? '#090f1d' : '#ffffff';
+  // Swiss Civil Monograph Canvas Background
+  ctx.fillStyle = isDarkMode ? '#1A1D22' : '#FAF9F6';
   ctx.fillRect(0, 0, W, H);
 
   const vals = solution.samples.map(s => s[key]);
@@ -8239,8 +8346,8 @@ function renderSingleDiagram(canvasId, key, colorHex, fillRgba, unitStr, extrema
   const xToPx = x => padL + (x / L) * plotW;
   const yToPx = v => zeroY - v * scaleY;
 
-  // Grid
-  ctx.strokeStyle = isDarkMode ? '#1e293b' : '#e2e8f0';
+  // Engineering Station Hairline Grid
+  ctx.strokeStyle = isDarkMode ? '#2D323B' : '#E2E2DC';
   ctx.lineWidth = 1;
   for (let x = 0; x <= L + 0.001; x += 0.5) {
     const px = xToPx(x);
@@ -8249,22 +8356,23 @@ function renderSingleDiagram(canvasId, key, colorHex, fillRgba, unitStr, extrema
     ctx.lineTo(px, H - padB);
     ctx.stroke();
     if (Math.abs(x % 1) < 1e-3 || Math.abs((x - 0.5) % 1) < 1e-3) {
-      ctx.fillStyle = isDarkMode ? '#64748b' : '#475569';
+      ctx.fillStyle = isDarkMode ? '#8B949E' : '#555C66';
       ctx.font = '10px JetBrains Mono';
       ctx.textAlign = 'center';
       ctx.fillText(Units.len(x).toFixed(1), px, H - 6);
     }
   }
 
-  // Zero baseline (Red reference line)
-  ctx.strokeStyle = '#f43f5e';
+  // Zero baseline (Reference Hairline)
+  ctx.strokeStyle = isDarkMode ? '#E54D42' : '#D63A2F';
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(padL, zeroY);
   ctx.lineTo(padL + plotW, zeroY);
   ctx.stroke();
 
-  // Shaded Area
+  // Shaded Area & 45° Directional Mechanics Hatching
+  ctx.save();
   ctx.beginPath();
   ctx.moveTo(xToPx(0), zeroY);
   solution.samples.forEach(s => ctx.lineTo(xToPx(s.x), yToPx(s[key])));
@@ -8272,6 +8380,26 @@ function renderSingleDiagram(canvasId, key, colorHex, fillRgba, unitStr, extrema
   ctx.closePath();
   ctx.fillStyle = fillRgba;
   ctx.fill();
+  ctx.clip();
+
+  // Directional 45-degree hatching lines for structural legibility
+  ctx.strokeStyle = colorHex;
+  ctx.lineWidth = 1;
+  ctx.globalAlpha = isDarkMode ? 0.28 : 0.22;
+  const hatchStep = 8;
+  for (let d = -plotH; d <= plotW + plotH; d += hatchStep) {
+    ctx.beginPath();
+    ctx.moveTo(padL + d, zeroY);
+    ctx.lineTo(padL + d + plotH, zeroY - plotH);
+    ctx.stroke();
+  }
+  for (let d = -plotH; d <= plotW + plotH; d += hatchStep) {
+    ctx.beginPath();
+    ctx.moveTo(padL + d, zeroY);
+    ctx.lineTo(padL + d + plotH, zeroY + plotH);
+    ctx.stroke();
+  }
+  ctx.restore();
 
   // Curve Stroke
   ctx.beginPath();
@@ -8283,28 +8411,26 @@ function renderSingleDiagram(canvasId, key, colorHex, fillRgba, unitStr, extrema
   ctx.lineWidth = 2;
   ctx.stroke();
 
-  // Red Extrema Dots
+  // Extrema Indicator Dots
   [extremaPos, extremaNeg].forEach(ext => {
     if (ext && isFinite(ext.val) && Math.abs(ext.val) > 1e-5) {
       const px = xToPx(ext.x);
       const py = yToPx(ext.val);
-      ctx.fillStyle = '#ef4444';
+      ctx.fillStyle = isDarkMode ? '#E54D42' : '#D63A2F';
       ctx.beginPath();
       ctx.arc(px, py, 3.8, 0, Math.PI * 2);
       ctx.fill();
     }
   });
 
-  // Hover Scrubber Line
+  // Synchronized Station Datum Line (Swiss Vermilion 1px Line)
   const curPx = xToPx(hoveredBeamX);
-  ctx.strokeStyle = '#38bdf8';
-  ctx.lineWidth = 1.2;
-  ctx.setLineDash([3, 3]);
+  ctx.strokeStyle = isDarkMode ? '#E54D42' : '#D63A2F';
+  ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(curPx, padT);
   ctx.lineTo(curPx, H - padB);
   ctx.stroke();
-  ctx.setLineDash([]);
 
   if (captionId && extremaPos && extremaNeg) {
     const capEl = document.getElementById(captionId);
@@ -8314,7 +8440,6 @@ function renderSingleDiagram(canvasId, key, colorHex, fillRgba, unitStr, extrema
     }
   }
 }
-
 function renderAllDiagrams() {
   const isTH = currentLang === 'th';
   const suiteTitle = document.getElementById('diagramsSuiteHeaderTitle');
@@ -8712,10 +8837,8 @@ function load2DExampleFromGallery(presetKey) {
 // Sync the Light/Dark toggle icon with the active theme on page load (moon = dark, sun = light)
 try { applyThemeIcon(); } catch (e) {}
 
-
-    /* =====================================================================
-     * PART 2: 2D STRUCTURAL ANALYSIS (FRAME & TRUSS WORKSPACE)
-     * ===================================================================== */
+</script>
+  <script>
 /*************************************************************************
  * PART 2: 2D STRUCTURAL ANALYSIS — FRAME & TRUSS INTERACTIVE WORKSPACE
  * Real-Time 2D Direct Stiffness Method (DSM) FEA Solver + CAD Canvas
@@ -11021,10 +11144,8 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 
-
-    /* =====================================================================
-     * PART 3: 3D STRUCTURAL VIEWER (THREE.JS CAD WORKSPACE)
-     * ===================================================================== */
+</script>
+  <script>
 /*************************************************************************
  * PART 3: 3D INTERACTIVE STRUCTURAL ANALYSIS VIEWER
  * 360° Orbit Rotation, Pan, Zoom, 3D Extruded Members & Real-Time Forces
@@ -11559,10 +11680,8 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 
-
-    /* =====================================================================
-     * PART 4: SECTION BUILDER, FORMULA GUIDE & AI STRUCTURAL MODELER
-     * ===================================================================== */
+</script>
+  <script>
 /*************************************************************************
  * PART 4: SECTION BUILDER, STANDARD CATALOG & CLOUD LIBRARY
  *************************************************************************/
@@ -13556,10 +13675,8 @@ function renderSavedProjectsList() {
   `).join('');
 }
 
-
-    /* =====================================================================
-     * PART 5: 2D & 3D TRUSS STIFFNESS METHOD ENGINE
-     * ===================================================================== */
+</script>
+  <script>
 /*************************************************************************
  * CIVILMECH STUDIO — ROOF TRUSS 2D & 3D STRUCTURAL ANALYSIS & DESIGN SUITE
  * Developed for Civil Engineering Education (นาย ธนัตถ์ วงษ์อุ่น ECE2NR68)
@@ -16631,6 +16748,44 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 
+</script>
+  <script>
+    // Automatic fallback loader if scripts are placed inside /js/ subfolder instead of root
+    (function() {
+      var fallbackScripts = [
+        { loaded: function() { return typeof solveBeam !== 'undefined'; }, src: 'js/solver1d.js' },
+        { loaded: function() { return typeof render2DWorkspace !== 'undefined'; }, src: 'js/workspace2d.js' },
+        { loaded: function() { return typeof render3DScene !== 'undefined'; }, src: 'js/viewer3d.js' },
+        { loaded: function() { return typeof setReportSource !== 'undefined'; }, src: 'js/section-report-ai.js' },
+        { loaded: function() { return typeof initTrussCalculator !== 'undefined'; }, src: 'js/truss-calculator.js' }
+      ];
+      function loadSeq(i) {
+        if (i >= fallbackScripts.length) {
+          if (typeof loadPreset === 'function' && (!window.solution || !window.solution.isValid)) {
+            try { loadPreset('report_example_4718'); } catch (e) {}
+          }
+          if (typeof init2DCanvasEvents === 'function' && typeof load2DPreset === 'function') {
+            try { init2DCanvasEvents(); load2DPreset('braced_two_storey'); } catch (e) {}
+          }
+          if (typeof initTrussCalculator === 'function' && !window.trussSolution) {
+            try { initTrussCalculator(); } catch (e) {}
+          }
+          return;
+        }
+        if (fallbackScripts[i].loaded()) {
+          loadSeq(i + 1);
+          return;
+        }
+        var s = document.createElement('script');
+        s.src = fallbackScripts[i].src;
+        s.onload = function() { loadSeq(i + 1); };
+        s.onerror = function() { loadSeq(i + 1); };
+        document.body.appendChild(s);
+      }
+      if (typeof solveBeam === 'undefined' || typeof initTrussCalculator === 'undefined') {
+        loadSeq(0);
+      }
+    })();
   </script>
 </body>
 </html>
